@@ -33,6 +33,10 @@ MEAN_METRICS = (
     "false_abstain",
     "latency_ms",
     "total_tokens",
+    "cost_usd",
+    "llm_cache_hits",
+    "llm_calls",
+    "structured_output_validity",
 )
 
 
@@ -50,6 +54,7 @@ def per_item_rows(
         expected_abstain = it.expected_status == "abstained"
         predicted_abstain = p.status == "abstained"
         answered_both = p.status == "answered" and not expected_abstain
+        judge_cost = j.cost_usd if j is not None else None
         row: dict[str, Any] = {
             "id": it.id,
             "language": it.language,
@@ -61,7 +66,19 @@ def per_item_rows(
             "false_abstain": float(predicted_abstain) if not expected_abstain else None,
             "citation_validity": citation_validity(p) if p.status == "answered" else None,
             "latency_ms": p.latency_ms,
-            "total_tokens": float(p.prompt_tokens + p.completion_tokens),
+            "total_tokens": float(
+                p.prompt_tokens
+                + p.completion_tokens
+                + (j.prompt_tokens + j.completion_tokens if j is not None else 0)
+            ),
+            "cost_usd": (p.cost_usd or 0.0) + (judge_cost or 0.0)
+            if p.cost_usd is not None or judge_cost is not None
+            else None,
+            "llm_cache_hits": float(p.llm_cache_hits),
+            "llm_calls": float(p.llm_calls),
+            "structured_output_validity": (
+                p.valid_structured_outputs / p.structured_outputs if p.structured_outputs else None
+            ),
         }
         for m in JUDGE_METRICS:
             row[m] = getattr(j, m) if (j is not None and answered_both) else None

@@ -1,0 +1,319 @@
+{
+  "language=en": {
+    "abstention_correct": {
+      "high": 0.875,
+      "low": 0.25,
+      "n": 8,
+      "value": 0.625
+    },
+    "abstention_f1": {
+      "high": 0.909091,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.571429
+    },
+    "answer_relevancy": {
+      "high": 1.0,
+      "low": 0.8,
+      "n": 3,
+      "value": 0.933333
+    },
+    "citation_precision": {
+      "high": 1.0,
+      "low": 0.8,
+      "n": 3,
+      "value": 0.933333
+    },
+    "citation_recall": {
+      "high": 1.0,
+      "low": 0.5,
+      "n": 3,
+      "value": 0.833333
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "faithfulness": {
+      "high": 1.0,
+      "low": 0.7,
+      "n": 3,
+      "value": 0.883333
+    },
+    "false_abstain": {
+      "high": 0.833333,
+      "low": 0.166667,
+      "n": 6,
+      "value": 0.5
+    },
+    "keypoint_coverage": {
+      "high": 1.0,
+      "low": 0.5,
+      "n": 3,
+      "value": 0.8
+    },
+    "latency_ms": {
+      "high": 17509.104677,
+      "low": 9789.219001,
+      "n": 8,
+      "value": 13799.021425
+    },
+    "latency_p50_ms": {
+      "high": 20483.5045,
+      "low": 5317.0761,
+      "n": 8,
+      "value": 13950.96535
+    },
+    "latency_p95_ms": {
+      "high": 21959.3536,
+      "low": 15447.695479,
+      "n": 8,
+      "value": 21442.806415
+    },
+    "llm_cache_hits": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.0
+    },
+    "llm_calls": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 8,
+      "value": 1.0
+    },
+    "structured_output_validity": {
+      "high": 1.0,
+      "low": 0.5,
+      "n": 8,
+      "value": 0.75
+    },
+    "total_tokens": {
+      "high": 8557.265625,
+      "low": 3602.75,
+      "n": 8,
+      "value": 6178.0
+    }
+  },
+  "language=vi": {
+    "abstention_correct": {
+      "high": 0.875,
+      "low": 0.25,
+      "n": 8,
+      "value": 0.625
+    },
+    "abstention_f1": {
+      "high": 0.909091,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.571429
+    },
+    "answer_relevancy": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "citation_precision": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "citation_recall": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "faithfulness": {
+      "high": 1.0,
+      "low": 0.95,
+      "n": 3,
+      "value": 0.966667
+    },
+    "false_abstain": {
+      "high": 0.833333,
+      "low": 0.166667,
+      "n": 6,
+      "value": 0.5
+    },
+    "keypoint_coverage": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "latency_ms": {
+      "high": 17261.284877,
+      "low": 12872.064945,
+      "n": 8,
+      "value": 15260.164625
+    },
+    "latency_p50_ms": {
+      "high": 17827.7664,
+      "low": 12687.0185,
+      "n": 8,
+      "value": 16482.3682
+    },
+    "latency_p95_ms": {
+      "high": 18109.3853,
+      "low": 17179.01453,
+      "n": 8,
+      "value": 18010.818685
+    },
+    "llm_cache_hits": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.0
+    },
+    "llm_calls": {
+      "high": 2.0,
+      "low": 2.0,
+      "n": 8,
+      "value": 2.0
+    },
+    "structured_output_validity": {
+      "high": 0.9375,
+      "low": 0.5625,
+      "n": 8,
+      "value": 0.75
+    },
+    "total_tokens": {
+      "high": 6781.1125,
+      "low": 1127.525,
+      "n": 8,
+      "value": 4144.0
+    }
+  },
+  "n_items": 16,
+  "overall": {
+    "abstention_correct": {
+      "high": 0.814062,
+      "low": 0.375,
+      "n": 16,
+      "value": 0.625
+    },
+    "abstention_f1": {
+      "high": 0.833333,
+      "low": 0.181818,
+      "n": 16,
+      "value": 0.571429
+    },
+    "answer_relevancy": {
+      "high": 1.0,
+      "low": 0.9,
+      "n": 6,
+      "value": 0.966667
+    },
+    "citation_precision": {
+      "high": 1.0,
+      "low": 0.9,
+      "n": 6,
+      "value": 0.966667
+    },
+    "citation_recall": {
+      "high": 1.0,
+      "low": 0.75,
+      "n": 6,
+      "value": 0.916667
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 6,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "faithfulness": {
+      "high": 0.983333,
+      "low": 0.833333,
+      "n": 6,
+      "value": 0.925
+    },
+    "false_abstain": {
+      "high": 0.75,
+      "low": 0.25,
+      "n": 12,
+      "value": 0.5
+    },
+    "keypoint_coverage": {
+      "high": 1.0,
+      "low": 0.733333,
+      "n": 6,
+      "value": 0.9
+    },
+    "latency_ms": {
+      "high": 16671.522674,
+      "low": 12210.229008,
+      "n": 16,
+      "value": 14529.593025
+    },
+    "latency_p50_ms": {
+      "high": 17796.809164,
+      "low": 13257.1452,
+      "n": 16,
+      "value": 14845.3891
+    },
+    "latency_p95_ms": {
+      "high": 21959.3536,
+      "low": 17804.254575,
+      "n": 16,
+      "value": 20852.466775
+    },
+    "llm_cache_hits": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 16,
+      "value": 0.0
+    },
+    "llm_calls": {
+      "high": 1.75,
+      "low": 1.25,
+      "n": 16,
+      "value": 1.5
+    },
+    "structured_output_validity": {
+      "high": 0.90625,
+      "low": 0.5625,
+      "n": 16,
+      "value": 0.75
+    },
+    "total_tokens": {
+      "high": 7023.429688,
+      "low": 3136.057813,
+      "n": 16,
+      "value": 5161.0
+    }
+  },
+  "status_counts": {
+    "abstained": 10,
+    "answered": 6
+  }
+}

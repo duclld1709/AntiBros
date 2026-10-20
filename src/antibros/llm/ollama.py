@@ -36,8 +36,16 @@ class OllamaClient(LLMClient):
         transport: httpx.BaseTransport | None = None,
         max_retries: int = 4,
         backoff_s: float = 3.0,
+        input_price_per_million: float | None = None,
+        output_price_per_million: float | None = None,
     ):
-        super().__init__(model=model, digest=digest, cache=cache)
+        super().__init__(
+            model=model,
+            digest=digest,
+            cache=cache,
+            input_price_per_million=input_price_per_million,
+            output_price_per_million=output_price_per_million,
+        )
         self.keep_alive = keep_alive
         self.max_retries, self.backoff_s = max_retries, backoff_s
         self._http = httpx.Client(

@@ -1,21 +1,30 @@
 # AntiBros
 
-Evidence-based Q&A for muscle-building nutrition (protein & creatine): cited RAG with hybrid
-search, reranking, citation verification, abstention and medical guardrails — built and
-evaluated entirely on one RTX 3050 6GB laptop.
+Evidence-based Q&A for muscle-building nutrition (protein and creatine): cited RAG with hybrid
+search, reranking, citation verification, abstention and medical guardrails, evaluated on an RTX
+3050 6GB laptop.
 
-> Status: **M0 — setup**. Results: TBD (every number will link to `experiments/`).
+> Status: M3 baseline RAG, providers, API and UI. Run artifacts are stored under `experiments/`.
 
-## Quickstart (Windows, PowerShell or Git Bash)
+## Quickstart (Windows, PowerShell)
+
 ```powershell
 uv sync
-uv run poe check          # lint + typecheck + test
-uv run poe up             # Qdrant in Docker Desktop
 uv run antibros --help
+uv run antibros index --config configs/baseline.yaml --chunker section_aware --embedder bge_m3
+uv run antibros serve --config configs/baseline.yaml --models configs/models/laptop.yaml
 ```
-Setup details: [docs/setup_windows.md](docs/setup_windows.md). Hardware measurements:
-[reports/hardware.md](reports/hardware.md).
 
-## Learn from this repo
-Each milestone has a brief in [docs/milestones/](docs/milestones/) and a git tag `m0` … `m6`.
-Design decisions live in [docs/adr/](docs/adr/).
+The API listens on `http://127.0.0.1:8000` (`/health`, `/ask`, `/feedback`). Start the UI in a
+second terminal with `uv run streamlit run ui/streamlit_app.py`. Ollama must be running with the
+models listed in `configs/models/laptop.yaml`. Setup details: [docs/setup_windows.md](docs/setup_windows.md).
+
+Run the M3 development baseline with:
+
+```powershell
+uv run antibros eval predict --config configs/baseline.yaml --models configs/models/laptop.yaml --tag m3_dev
+uv run antibros eval judge --config configs/baseline.yaml --models configs/models/laptop.yaml --run experiments/<run-id>
+```
+
+See [reports/hardware.md](reports/hardware.md) for measured throughput and projections. Milestones
+are documented in [docs/milestones/](docs/milestones/) and design decisions in [docs/adr/](docs/adr/).

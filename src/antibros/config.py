@@ -34,6 +34,8 @@ class ModelSpec(_Strict):
     keep_alive: str = "5m"
     temperature: float = 0.0
     think: bool = False
+    input_price_per_million: float | None = Field(default=None, ge=0)
+    output_price_per_million: float | None = Field(default=None, ge=0)
 
 
 class ModelProfile(_Strict):
@@ -182,6 +184,11 @@ class GuardConfig(_Strict):
     mode: Literal["fake", "rule", "llm", "rule_llm"] = "rule_llm"
 
 
+class TracingConfig(_Strict):
+    backend: Literal["jsonl", "langfuse", "none"] = "jsonl"
+    path: Path = Path("experiments/traces.jsonl")
+
+
 class AppConfig(_Strict):
     """Top-level pipeline config. Grows milestone by milestone; every step is toggleable."""
 
@@ -198,6 +205,7 @@ class AppConfig(_Strict):
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
     guard: GuardConfig = Field(default_factory=GuardConfig)
+    tracing: TracingConfig = Field(default_factory=TracingConfig)
     prompts_dir: Path = Path("prompts")
     reports_dir: Path = Path("reports")
     log_level: str = "INFO"
@@ -212,6 +220,9 @@ class Settings(BaseSettings):
     llm_base_url: str = "http://127.0.0.1:11434/v1"
     openai_api_key: SecretStr | None = None
     gemini_api_key: SecretStr | None = None
+    langfuse_public_key: SecretStr | None = None
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
     qdrant_url: str = "http://127.0.0.1:6333"
 
 

@@ -46,10 +46,15 @@ class LLMResult(BaseModel):
     usage: Usage = Field(default_factory=Usage)
     latency_ms: float = 0.0
     cached: bool = False
+    cost_usd: float | None = None
 
 
 class StructuredOutputError(ValueError):
     """The model returned text that does not validate against the requested schema."""
+
+    def __init__(self, message: str, *, cached: bool = False):
+        super().__init__(message)
+        self.cached = cached
 
 
 class LLMClient(ABC):
@@ -57,10 +62,19 @@ class LLMClient(ABC):
 
     provider: str = "base"
 
-    def __init__(self, model: str, digest: str | None = None, cache: LLMCache | None = None):
+    def __init__(
+        self,
+        model: str,
+        digest: str | None = None,
+        cache: LLMCache | None = None,
+        input_price_per_million: float | None = None,
+        output_price_per_million: float | None = None,
+    ):
         self.model = model
         self.digest = digest
         self.cache = cache
+        self.input_price_per_million = input_price_per_million
+        self.output_price_per_million = output_price_per_million
 
     @abstractmethod
     def _complete(
@@ -80,6 +94,8 @@ class LLMClient(ABC):
             "provider": self.provider,
             "model": self.model,
             "digest": self.digest,
+            "input_price_per_million": self.input_price_per_million,
+            "output_price_per_million": self.output_price_per_million,
             "prompt_hash": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
             "params": params.model_dump(),
         }
@@ -96,20 +112,36 @@ class LLMClient(ABC):
 
         if self.cache is not None and (hit := self.cache.get(key)) is not None:
             result = LLMResult.model_validate(hit)
-            return result.model_copy(update={"cached": True})
+            cached_parsed = None
+            if schema is not None:
+                try:
+                    cached_parsed = schema.model_validate_json(result.text).model_dump(mode="json")
+                except ValueError as e:
+                    raise StructuredOutputError(
+                        f"{self.model}: invalid structured output: {e}", cached=True
+                    ) from e
+            return result.model_copy(update={"parsed": cached_parsed, "cached": True})
 
         start = time.perf_counter()
         text, usage = self._complete(messages, json_schema, params)
         latency_ms = (time.perf_counter() - start) * 1000.0
 
+        cost = None
+        if self.input_price_per_million is not None and self.output_price_per_million is not None:
+            cost = (
+                usage.prompt_tokens * self.input_price_per_million
+                + usage.completion_tokens * self.output_price_per_million
+            ) / 1_000_000
+        result = LLMResult(text=text, usage=usage, latency_ms=latency_ms, cost_usd=cost)
+        if self.cache is not None:
+            self.cache.put(key, result.model_dump(mode="json"))
         parsed: dict[str, Any] | None = None
         if schema is not None:
             try:
                 parsed = schema.model_validate_json(text).model_dump(mode="json")
             except ValueError as e:
                 raise StructuredOutputError(f"{self.model}: invalid structured output: {e}") from e
-
-        result = LLMResult(text=text, parsed=parsed, usage=usage, latency_ms=latency_ms)
+        result = result.model_copy(update={"parsed": parsed})
         if self.cache is not None:
             self.cache.put(key, result.model_dump(mode="json"))
         return result

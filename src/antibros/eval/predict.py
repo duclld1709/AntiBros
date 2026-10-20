@@ -39,7 +39,9 @@ class FakePipeline:
 def make_pipeline(cfg: AppConfig, models: ModelProfile) -> Pipeline:
     if cfg.pipeline.kind == "fake":
         return FakePipeline()
-    raise NotImplementedError("the RAG pipeline (pipeline.kind: rag) is implemented in M3")
+    from antibros.eval.rag import RagPipeline
+
+    return RagPipeline(cfg, models)
 
 
 def load_predictions(run_dir: Path) -> list[Prediction]:

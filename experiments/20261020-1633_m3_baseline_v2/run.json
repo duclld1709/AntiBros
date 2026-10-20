@@ -1,0 +1,5 @@
+{
+  "eval_set": "golden",
+  "kind": "e2e",
+  "split": "dev"
+}

@@ -12,12 +12,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from pydantic import BaseModel, Field
+
 from antibros.config import AppConfig, ModelProfile
 from antibros.eval.schemas import Judgment, Prediction
 from antibros.evalset.schemas import GoldenItem
 from antibros.evalset.text import content_words
 from antibros.io import append_jsonl, read_jsonl, repair_jsonl_tail
+from antibros.llm import LLMClient, LLMParams
 from antibros.logging import get_logger
+from antibros.prompts import PromptTemplate, load_prompt
 
 log = get_logger(__name__)
 JUDGMENTS = "judgments.jsonl"
@@ -53,7 +57,76 @@ class FakeJudge:
 def make_judge(cfg: AppConfig, models: ModelProfile) -> Judge:
     if cfg.judge.kind == "fake":
         return FakeJudge()
-    raise NotImplementedError("the LLM judge (judge.kind: llm) is implemented in M3")
+    if models.judge is None:
+        raise ValueError("model profile needs a judge model when judge.kind=llm")
+    from antibros.config import Settings
+    from antibros.llm import build_client
+
+    client = build_client(
+        models.judge, Settings(), cfg.llm_cache.dir if cfg.llm_cache.enabled else None
+    )
+    return LLMJudge(
+        client, load_prompt(cfg.prompts_dir, "judge"), cfg.judge.max_tokens, models.judge.num_ctx
+    )
+
+
+class JudgeScores(BaseModel):
+    faithfulness: float = Field(ge=0, le=1)
+    answer_relevancy: float = Field(ge=0, le=1)
+    keypoint_coverage: float = Field(ge=0, le=1)
+    citation_precision: float = Field(ge=0, le=1)
+    citation_recall: float = Field(ge=0, le=1)
+
+
+class LLMJudge:
+    def __init__(self, client: LLMClient, prompt: PromptTemplate, max_tokens: int, num_ctx: int):
+        self.client, self.prompt, self.max_tokens, self.num_ctx = (
+            client,
+            prompt,
+            max_tokens,
+            num_ctx,
+        )
+
+    def judge(self, item: GoldenItem, pred: Prediction) -> Judgment:
+        if pred.status != "answered":
+            return Judgment(id=item.id)
+        cited = {n for claim in pred.claims for n in claim.citation_ids}
+        contexts = "\n\n".join(
+            f"[{n}] {ctx.text}" for n, ctx in enumerate(pred.contexts, 1) if n in cited
+        )
+        claims = "\n".join(f"- {c.text} (citations: {c.citation_ids})" for c in pred.claims)
+        result = self.client.complete(
+            self.prompt.render(
+                question=item.question,
+                key_points="; ".join(item.reference_key_points),
+                answer=pred.answer,
+                claims=claims or "(none)",
+                contexts=contexts or "(none)",
+            ),
+            schema=JudgeScores,
+            params=LLMParams(
+                temperature=0,
+                max_tokens=self.max_tokens,
+                num_ctx=self.num_ctx,
+            ),
+        )
+        scores = JudgeScores.model_validate(result.parsed)
+        return Judgment(
+            id=item.id,
+            **scores.model_dump(),
+            latency_ms=result.latency_ms,
+            prompt_tokens=result.usage.prompt_tokens,
+            completion_tokens=result.usage.completion_tokens,
+            cost_usd=result.cost_usd,
+        )
+
+    def close(self) -> None:
+        unload = getattr(self.client, "unload", None)
+        if callable(unload):
+            unload()
+        close = getattr(self.client, "close", None)
+        if callable(close):
+            close()
 
 
 def load_judgments(run_dir: Path) -> list[Judgment]:

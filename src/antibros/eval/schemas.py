@@ -42,6 +42,11 @@ class Prediction(_Rec):
     latency_ms: float = 0.0
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    cost_usd: float | None = None
+    llm_cache_hits: int = 0
+    llm_calls: int = 0
+    structured_outputs: int = 0
+    valid_structured_outputs: int = 0
     error: str | None = None
 
 
@@ -55,6 +60,9 @@ class Judgment(_Rec):
     citation_precision: float | None = None
     citation_recall: float | None = None
     latency_ms: float = 0.0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float | None = None
     error: str | None = None
 
 

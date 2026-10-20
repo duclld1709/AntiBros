@@ -683,8 +683,13 @@ def eval_predict(
                 pipeline=p.model_dump() if p else None,
             ),
         )
-    with timed_phase(run_dir, "predict", f"e2e_{split.value}", cfg.eval.budgets_s, len(items)):
-        stats = run_predict(items, pipeline, run_dir, limit)
+    try:
+        with timed_phase(run_dir, "predict", f"e2e_{split.value}", cfg.eval.budgets_s, len(items)):
+            stats = run_predict(items, pipeline, run_dir, limit)
+    finally:
+        close = getattr(pipeline, "close", None)
+        if callable(close):
+            close()
     typer.echo(
         f"{run_dir}: predicted {stats.predicted} "
         f"(resumed after {stats.done_before}), errors {stats.errors}"
@@ -720,8 +725,13 @@ def eval_judge(run: RunArg, models: ModelsOpt) -> None:
     ]
     preds = load_predictions(run)
     judge = make_judge(cfg, profile)
-    with timed_phase(run, "judge", f"e2e_{meta['split']}", cfg.eval.budgets_s, len(preds)):
-        stats = run_judge(items, preds, judge, run)
+    try:
+        with timed_phase(run, "judge", f"e2e_{meta['split']}", cfg.eval.budgets_s, len(preds)):
+            stats = run_judge(items, preds, judge, run)
+    finally:
+        close = getattr(judge, "close", None)
+        if callable(close):
+            close()
     typer.echo(
         f"{run}: judged {stats.judged} (resumed after {stats.done_before}), errors {stats.errors}"
     )
@@ -788,9 +798,18 @@ def compare(
 
 
 @app.command()
-def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
-    """Start the FastAPI server."""
-    _todo("serve", "M3")
+def serve(
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    config: ConfigOpt = Path("configs/baseline.yaml"),
+    models: ModelsOpt = Path("configs/models/laptop.yaml"),
+) -> None:
+    """Start the FastAPI application."""
+    import uvicorn
+
+    from antibros.api import create_app
+
+    uvicorn.run(create_app(config, models), host=host, port=port)
 
 
 if __name__ == "__main__":

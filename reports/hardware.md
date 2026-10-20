@@ -73,5 +73,17 @@ one rerank batch of 20 pairs and one long generation.
    The reranker's `device` stays configurable and is the first thing to move to CPU on OOM. Larger rerank batches or a bigger `num_ctx` are not safe.
 3. **Pipeline LLM and judge cannot be co-resident** (≈4.0 + 4.5 GiB). This confirms the `predict` → `judge` split (ADR-0012).
 4. `num_ctx` 4096 → 8192 costs only ~265 MiB for `qwen3.5:4b`. 8192 stays the default.
-5. Decode speed is ~42 tok/s for the pipeline and ~50 tok/s for the judge. Whether this meets the budget of ≤ 20 s per question (pipeline) and ≤ 12 s (judge) (§6.8) is measured end to end in M3: TBD.
+5. End-to-end M3 performance is measured below: predict averages 14.53 s/question and the judge phase averages 1.96 s/question over all 16 dev items.
 6. Embedded Qdrant (`vector_store.mode: local`) supports dense + sparse named vectors and RRF fusion. Verified on disk and `:memory:` with `qdrant-client` 1.19.1.
+
+## M3 baseline (2026-10-20)
+
+Run: [`experiments/20261020-1633_m3_baseline_v2/`](../experiments/20261020-1633_m3_baseline_v2/). It used all 16 frozen golden dev questions: 6 answered and 10 abstained. Predict took 232.55 s (14.53 s/question); judge took 31.38 s (1.96 s/question averaged over 16; abstained cases require no judge call); total 263.93 s, within the 600 s budget. `timing.json`, predictions, judgments, per-item metrics, and aggregate metrics are in the run directory.
+
+The baseline emitted 18 valid structured outputs from 24 attempts (75%). All citations on the six answered items mapped to retrieved context (citation validity 100%). Judge means for answered items: faithfulness 0.925, key-point coverage 0.900, citation precision 0.967, citation recall 0.917. Abstention F1 was 0.571. These are small-sample dev results, not a test-set estimate.
+
+Cache replay run [`experiments/20261020-1646_m3_cache_replay_verified/`](../experiments/20261020-1646_m3_cache_replay_verified/) produced 24 cache hits from 24 structured-output requests (100%); 18 cached outputs validated. Invalid raw outputs are cached too, so a malformed response does not trigger another provider call during identical replay.
+
+During the cache replay, sampled `nvidia-smi` memory peaked at 5,215 MiB used (one-second sampling, n=1; includes display and other GPU allocations). The existing isolated model probe measured 4,016 MiB for qwen3.5:4b at 8k context and 1,346 MiB for BGE-M3; do not sum them because they are loaded in separate phases. The 32-question test split is projected at about 8.8 minutes by linear extrapolation of the full predict+judge baseline (actual dev run: 4.4 minutes). Full 48-question evaluation is projected at about 13.2 minutes. Projections are estimates; workload composition and warm cache can change runtime.
+
+API/UI smoke: `GET /health` returned 200; `POST /ask` returned an answered response with three citations for a golden dev query; its trace was appended to `experiments/traces.jsonl`. Streamlit served HTTP 200 on localhost. The UI/API smoke was manual on the laptop.
