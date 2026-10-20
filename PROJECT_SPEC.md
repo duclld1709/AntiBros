@@ -456,6 +456,12 @@ Chi tiết vận hành nằm ở `docs/runbooks/final_eval.md`. Cấu hình máy
 1. Cuối M4: commit `final_eval_plan.yaml`, gồm danh sách run, sha256 của từng config, hồ sơ model kèm digest, và quy tắc chọn guard. Hỏi chủ dự án trước khi tag `m4`.
 2. M5: chạy `antibros eval final --plan configs/final_eval_plan.yaml`. Lệnh kiểm tra plan hash, git clean và digest model trước khi chạy.
 3. Nếu một run lỗi vì sự cố hạ tầng (OOM, Ollama crash), được chạy lại **một lần** và phải ghi vào `experiments/deviations.md` như một sai lệch so với kế hoạch. Không chạy lại vì kết quả "xấu".
+4. Cách hiện thực ở M5 (ADR-0014):
+   - `test_runs.log` là JSONL, ghi trạng thái từng run (`started`, `resumed`, `interrupted`, `failed`, `completed`).
+   - Run bị ngắt thì resume trong cùng thư mục, trên cùng commit và phần cứng.
+   - Run `failed` chỉ chạy lại bằng `--rerun <run> --reason …`, tối đa một lần.
+   - `--rehearsal` diễn tập trên dev.
+   - `antibros eval errors` gán nhãn nháp cho câu sai, làm đầu vào cho `reports/error_analysis.md`.
 
 ---
 
@@ -589,7 +595,8 @@ antibros eval report  --run experiments/<run>
 antibros eval tune    --config configs/full.yaml --models configs/models/<m>.yaml --param <ngưỡng>   # chỉ lưới khai báo trước, dev
 antibros summarize experiments/<run>...                               # bảng metric kèm CI cho report
 antibros plan lock --guard-run experiments/<run> ...                  # cuối M4: chọn guard theo quy tắc, ghi hash/digest
-antibros eval final   --plan configs/final_eval_plan.yaml          # cách duy nhất để chạy test
+antibros eval final   --plan configs/final_eval_plan.yaml          # cách duy nhất để chạy test (--rehearsal: diễn tập trên dev)
+antibros eval errors  --run experiments/<run> ...                   # nhãn nháp cho câu sai (M5)
 antibros compare experiments/<runA> experiments/<runB>
 antibros serve
 ```

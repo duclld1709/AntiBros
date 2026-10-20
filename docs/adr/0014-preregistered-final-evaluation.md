@@ -28,6 +28,27 @@ With everything on one laptop, nothing physically prevents running the test spli
 - **Re-runs:** a run that fails for infrastructure reasons (OOM, runtime crash) may be re-run once, recorded in `experiments/deviations.md`. A run is never re-run because of its results.
 - A `--rehearsal` mode exercises the whole flow on dev with `--limit 3` and does not write to `test_runs.log`.
 
+## Implementation (M5)
+- `antibros eval final` (`src/antibros/eval/final.py`) runs the checks above before touching the
+  test split. It also verifies the profile sha256, and compares the digests the local Ollama
+  server reports (`/api/tags`) with the plan. Changes under `experiments/` (the harness's own
+  outputs) do not count as a dirty tree, so an interrupted run can resume.
+- `experiments/test_runs.log` is JSONL, one line per state change of a planned run:
+  `started`, `resumed`, `interrupted`, `failed`, `completed`. Each line carries the plan
+  sha256, commit, hardware and run directory.
+- An *interrupted* run resumes in place, on the same commit and hardware. This is not a
+  re-run: written predictions and judgments are kept.
+- A *failed* run (infrastructure: prediction errors, judge transport errors, crashes) is
+  never resumed. `--rerun <run> --reason ...` starts it once in a new `_rerun1` directory and
+  appends the reason to `experiments/deviations.md`; a second re-run is refused.
+- A *completed* run is never run again. All decisions are taken before any run starts, so a
+  refusal leaves nothing half-done.
+- `--rehearsal` exercises the same flow on dev with `--limit` questions, without log entries.
+- After `baseline_test` and `full_test`, a paired-bootstrap comparison (overall, per
+  language, per category, including abstention F1) is written next to the runs.
+- A unit test fails CI if any planned config, the model profile or the evalset stops matching
+  the locked plan.
+
 ## Evidence
 `configs/final_eval_plan.yaml`, `experiments/test_runs.log`, `experiments/deviations.md`.
 
