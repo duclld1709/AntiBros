@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic test fixture (not a real article): narrative review / position stand layout.
+     No sec-type attributes, everything nested under "Background", administrative sections in
+     the body, an untitled notes section, lists, a boxed text and odd whitespace (NBSP, thin
+     space, tabs). -->
+<article article-type="review-article">
+  <front>
+    <journal-meta><journal-title>Synthetic Sports Review</journal-title></journal-meta>
+    <article-meta>
+      <article-id pub-id-type="doi">10.0000/synthetic.2</article-id>
+      <title-group><article-title>Synthetic position stand: creatine questions</article-title></title-group>
+      <contrib-group>
+        <contrib contrib-type="author"><collab>Synthetic Society Working Group</collab></contrib>
+      </contrib-group>
+      <abstract id="Abs1"><p>Creatine monohydrate is safe and effective.</p></abstract>
+      <abstract abstract-type="graphical"><p>Graphical abstract text that must be skipped.</p></abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec id="Sec1" disp-level="1">
+      <title>Background</title>
+      <p>Creatine is widely used.	<sup><xref ref-type="bibr" rid="b1">1</xref></sup></p>
+      <sec id="Sec2" disp-level="2">
+        <title>Does creatine cause water retention?</title>
+        <p>Short-term loading may increase body water:</p>
+        <p>Typical protocols:<list list-type="bullet">
+            <list-item><p>20 g/day for 5–7 days</p></list-item>
+            <list-item><p>3–5 g/day maintenance</p></list-item>
+          </list> Long-term data show no difference.</p>
+      </sec>
+      <sec id="Sec3" disp-level="2">
+        <title>Key points</title>
+        <boxed-text>
+          <caption><title>Box 1</title></caption>
+          <p>Loading is optional.</p>
+        </boxed-text>
+      </sec>
+    </sec>
+    <sec id="Sec4" disp-level="1">
+      <title>Conclusion</title>
+      <p>Creatine is one of the most studied supplements.</p>
+    </sec>
+    <sec id="FPar1"><title>Competing interests</title><p>None.</p></sec>
+    <sec id="FPar2"><title>Funding</title><p>No funding.</p></sec>
+    <sec id="notes1"><p>Cite this article as: Synthetic et al.</p></sec>
+  </body>
+</article>

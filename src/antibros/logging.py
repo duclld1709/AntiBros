@@ -11,6 +11,8 @@ import structlog
 def configure_logging(level: str = "INFO") -> None:
     """Configure stdlib logging and structlog to write key-value lines to stderr."""
     logging.basicConfig(level=level, stream=sys.stderr, format="%(message)s")
+    for noisy in ("httpx", "httpcore", "urllib3"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
     structlog.configure(
         processors=[
             structlog.processors.add_log_level,

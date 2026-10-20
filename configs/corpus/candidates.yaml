@@ -1,0 +1,21 @@
+# Corpus v1 candidates (spec §3.3). `antibros manifest` verifies each one against Europe PMC
+# (isOpenAccess = Y, full text, open licence, publication year) and writes the manifest.
+# A rejected candidate is replaced by the first passing fallback of the same topic.
+target: {T1: 7, T2: 5}
+candidates:
+  - {doc_id: PMC5477153, topic: T1, expected_year: 2017, label: "Jäger et al. ISSN position stand: protein and exercise"}
+  - {doc_id: PMC5596471, topic: T1, expected_year: 2017, label: "Kerksick et al. ISSN position stand: nutrient timing"}
+  - {doc_id: PMC5867436, topic: T1, expected_year: 2018, label: "Morton et al. protein supplementation meta-analysis"}
+  - {doc_id: PMC8978023, topic: T1, expected_year: 2022, label: "Nunes et al. protein intake meta-analysis"}
+  - {doc_id: PMC3879660, topic: T1, expected_year: 2013, label: "Schoenfeld, Aragon & Krieger protein timing meta-analysis"}
+  - {doc_id: PMC5828430, topic: T1, expected_year: 2018, label: "Schoenfeld & Aragon protein per meal"}
+  - {doc_id: PMC5214805, topic: T1, expected_year: 2017, label: "Schoenfeld et al. pre- vs post-exercise protein RCT"}
+  - {doc_id: PMC5469049, topic: T2, expected_year: 2017, label: "Kreider et al. ISSN position stand: creatine"}
+  - {doc_id: PMC7871530, topic: T2, expected_year: 2021, label: "Antonio et al. creatine questions and misconceptions"}
+  # Spec §3.3 leaves the year to verify: Europe PMC reports 2025.
+  - {doc_id: PMC11703406, topic: T2, label: "Part II. creatine questions and misconceptions"}
+  - {doc_id: PMC8949037, topic: T2, expected_year: 2022, label: "Wu et al. creatine scoping review"}
+  - {doc_id: PMC10180745, topic: T2, expected_year: 2023, label: "Burke et al. creatine regional hypertrophy meta-analysis"}
+fallbacks:
+  - {query: 'TITLE:"Creatine in Health and Disease" AND AUTH:"Kreider"', topic: T2, label: "Kreider & Stout 2021"}
+  - {query: 'TITLE:"higher-protein diets" AND TITLE:"kidney" AND AUTH:"Devries"', topic: T1, label: "Devries et al. 2018"}

@@ -54,7 +54,63 @@ class LLMCacheConfig(_Strict):
 class VectorStoreConfig(_Strict):
     mode: Literal["server", "local", "memory"] = "server"
     path: Path = Path("data/qdrant")
-    collection: str = "antibros"
+    collection_prefix: str = "antibros"
+    timeout_s: int = 60
+
+
+class EuropePMCConfig(_Strict):
+    base_url: str = "https://www.ebi.ac.uk/europepmc/webservices/rest"
+    timeout_s: float = 30.0
+    max_retries: int = 4
+    backoff_s: float = 1.0
+    min_interval_s: float = 0.2
+
+
+class IngestionConfig(_Strict):
+    manifest: Path = Path("evalsets/v1/corpus_manifest.jsonl")
+    candidates: Path = Path("configs/corpus/candidates.yaml")
+    raw_dir: Path = Path("data/raw")
+    processed_dir: Path = Path("data/processed")
+    europepmc: EuropePMCConfig = Field(default_factory=EuropePMCConfig)
+
+
+ChunkerName = Literal["fixed", "recursive", "section_aware"]
+CHUNKER_NAMES: tuple[ChunkerName, ...] = ("fixed", "recursive", "section_aware")
+
+
+class ChunkingConfig(_Strict):
+    """Token counts use ``tokenizer`` (the embedding model's; ``fake`` in CI)."""
+
+    tokenizer: str = "BAAI/bge-m3"
+    chunk_size: int = 512
+    fixed_overlap: int = 64
+    prepend_context: bool = True  # section_aware: embed "title + section" before the text
+
+
+class EmbedderConfig(_Strict):
+    kind: Literal["bge_m3", "e5", "fake"]
+    model: str = ""
+    device: Literal["auto", "cuda", "cpu"] = "auto"
+    fp16: bool = True
+    batch_size: int = 16
+    max_length: int = 1024
+    query_max_length: int = 512
+    dim: int = 64  # fake only
+
+
+class IndexConfig(_Strict):
+    chunkers: list[ChunkerName] = Field(default_factory=lambda: list(CHUNKER_NAMES))
+    embedders: list[str] = Field(default_factory=lambda: ["bge_m3", "e5_large"])
+    upsert_batch: int = 64
+
+
+class RetrievalConfig(_Strict):
+    chunker: ChunkerName = "section_aware"
+    embedder: str = "bge_m3"
+    mode: Literal["dense", "sparse", "hybrid"] = "hybrid"
+    top_k: int = 20
+    candidate_k: int = 50  # per-retriever depth before RRF
+    rrf_k: int = 60
 
 
 class AppConfig(_Strict):
@@ -63,6 +119,12 @@ class AppConfig(_Strict):
     name: str = "base"
     llm_cache: LLMCacheConfig = Field(default_factory=LLMCacheConfig)
     vector_store: VectorStoreConfig = Field(default_factory=VectorStoreConfig)
+    ingestion: IngestionConfig = Field(default_factory=IngestionConfig)
+    chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
+    embedders: dict[str, EmbedderConfig] = Field(default_factory=dict)
+    index: IndexConfig = Field(default_factory=IndexConfig)
+    retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
+    reports_dir: Path = Path("reports")
     log_level: str = "INFO"
 
 

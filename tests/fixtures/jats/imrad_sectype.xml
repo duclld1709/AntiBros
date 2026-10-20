@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic test fixture (not a real article): IMRaD with sec-type attributes. -->
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+  <front>
+    <journal-meta>
+      <journal-title-group><journal-title>Journal of Synthetic Nutrition</journal-title></journal-title-group>
+    </journal-meta>
+    <article-meta>
+      <article-id pub-id-type="pmcid">PMC0000001</article-id>
+      <article-id pub-id-type="doi">10.0000/synthetic.1</article-id>
+      <title-group><article-title>Protein before or after training: a <italic>synthetic</italic> trial</article-title></title-group>
+      <contrib-group>
+        <contrib contrib-type="author"><name><surname>Nguyen</surname><given-names>An</given-names></name></contrib>
+        <contrib contrib-type="author"><name><surname>Smith</surname><given-names>Jo</given-names></name></contrib>
+        <contrib contrib-type="editor"><name><surname>Editor</surname><given-names>Ed</given-names></name></contrib>
+      </contrib-group>
+      <abstract>
+        <p>Twenty trained men were randomly assigned to take 25 g of protein before or after training.</p>
+      </abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec sec-type="intro">
+      <title>Introduction</title>
+      <p>Nutrient timing is debated [<xref ref-type="bibr" rid="b1">1</xref>, <xref ref-type="bibr" rid="b2">2</xref>]. Some claim a narrow window (<xref ref-type="bibr" rid="b3">3</xref>).</p>
+    </sec>
+    <sec sec-type="methods">
+      <title>Methods</title>
+      <sec>
+        <title>Participants</title>
+        <p>Participants trained   three
+          times per week (<xref ref-type="table" rid="t1">Table 1</xref>).</p>
+        <table-wrap id="t1">
+          <label>Table 1</label>
+          <caption><p>Participant characteristics.</p></caption>
+          <table><tr><td>Age</td><td>23 years</td></tr></table>
+          <table-wrap-foot><fn><p>Values are means.</p></fn></table-wrap-foot>
+        </table-wrap>
+      </sec>
+      <supplementary-material id="s1"><label>Supplement</label><caption><p>Raw data.</p></caption></supplementary-material>
+    </sec>
+    <sec sec-type="results">
+      <title>Results</title>
+      <p>Lean mass increased similarly in both groups (p &gt; 0.05).</p>
+      <fig id="f1">
+        <label>Figure 1</label>
+        <caption><title>Lean mass change.</title><p>Error bars show SD.</p></caption>
+        <graphic xlink:href="f1.jpg"/>
+      </fig>
+    </sec>
+    <sec sec-type="discussion">
+      <title>Discussion</title>
+      <p>Timing mattered little when daily intake was adequate <xref ref-type="bibr" rid="b4">4</xref>.</p>
+    </sec>
+    <sec sec-type="conclusions">
+      <title>Conclusions</title>
+      <p>Trainees may take protein before or after training.</p>
+    </sec>
+  </body>
+  <back>
+    <ack><p>We thank the participants.</p></ack>
+    <ref-list><ref id="b1"><mixed-citation>Reference one.</mixed-citation></ref></ref-list>
+  </back>
+</article>

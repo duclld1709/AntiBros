@@ -6,4 +6,50 @@ llm_cache:
 vector_store:
   mode: server        # server (Docker Qdrant) | local (embedded, on disk) | memory (tests)
   path: data/qdrant
-  collection: antibros
+  collection_prefix: antibros   # collections are <prefix>_<chunker>_<embedder>
+  timeout_s: 60
+ingestion:
+  manifest: evalsets/v1/corpus_manifest.jsonl
+  candidates: configs/corpus/candidates.yaml
+  raw_dir: data/raw
+  processed_dir: data/processed
+  europepmc:
+    base_url: https://www.ebi.ac.uk/europepmc/webservices/rest
+    timeout_s: 30
+    max_retries: 4
+    backoff_s: 1.0
+    min_interval_s: 0.2   # rate limit between requests
+chunking:
+  tokenizer: BAAI/bge-m3  # multilingual-e5-large uses the same XLM-R vocabulary
+  chunk_size: 512
+  fixed_overlap: 64
+  prepend_context: true
+embedders:
+  bge_m3:
+    kind: bge_m3
+    model: BAAI/bge-m3
+    device: auto
+    fp16: true
+    batch_size: 16
+    max_length: 1024
+    query_max_length: 512
+  e5_large:
+    kind: e5
+    model: intfloat/multilingual-e5-large
+    device: auto
+    fp16: true
+    batch_size: 16
+    max_length: 512     # model limit; longer inputs are truncated
+    query_max_length: 512
+index:
+  chunkers: [fixed, recursive, section_aware]
+  embedders: [bge_m3, e5_large]
+  upsert_batch: 64
+retrieval:
+  chunker: section_aware
+  embedder: bge_m3
+  mode: hybrid          # dense | sparse | hybrid (RRF)
+  top_k: 20
+  candidate_k: 50
+  rrf_k: 60
+reports_dir: reports

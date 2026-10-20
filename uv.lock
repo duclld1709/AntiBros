@@ -3,8 +3,8 @@ revision = 5
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and sys_platform == 'linux'",
+    "python_full_version < '3.12' and sys_platform == 'win32'",
     "python_full_version < '3.12' and sys_platform == 'linux'",
 ]
 supported-markers = [
@@ -36,6 +36,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "huggingface-hub" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
@@ -44,6 +45,7 @@ dependencies = [
     { name = "structlog" },
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "sys_platform == 'win32'" },
     { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'win32'" },
+    { name = "transformers" },
     { name = "typer" },
 ]
 
@@ -61,6 +63,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
+    { name = "huggingface-hub", specifier = ">=0.30" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.3" },
     { name = "pyyaml", specifier = ">=6.0" },
@@ -70,6 +73,7 @@ requires-dist = [
     { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.5" },
     { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.5", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torch", marker = "sys_platform == 'win32'", specifier = ">=2.5", index = "https://download.pytorch.org/whl/cu128" },
+    { name = "transformers", specifier = ">=4.51" },
     { name = "typer", specifier = ">=0.12" },
 ]
 

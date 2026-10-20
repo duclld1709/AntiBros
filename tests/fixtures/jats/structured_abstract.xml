@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic test fixture (not a real article): meta-analysis layout with a structured
+     abstract, numbered headings and <label>s, a heading-only "Results" section, MathML,
+     a definition list, a quote and decomposed Unicode (NFD) that cleaning must compose. -->
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" article-type="review-article">
+  <front>
+    <journal-meta><journal-title-group><journal-title>Synthetic Meta Reports</journal-title></journal-title-group></journal-meta>
+    <article-meta>
+      <title-group><article-title>Protein intake and lean mass: a meta-analysis</article-title></title-group>
+      <contrib-group>
+        <contrib contrib-type="author"><name><surname>Tran</surname><given-names>Việt</given-names></name></contrib>
+      </contrib-group>
+      <abstract>
+        <sec><title>Objective</title><p>To pool trials of protein intake.</p></sec>
+        <sec><title>Results</title><p>Protein increased lean mass by 0.3 kg.</p></sec>
+      </abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec id="s1"><label>1</label><title>1. Introduction</title>
+      <p>Protéine intake matters (café study).</p>
+    </sec>
+    <sec id="s2"><label>2</label><title>2. Materials and Methods</title>
+      <p>We searched databases.</p>
+      <def-list><def-item><term>RT</term><def><p>resistance training</p></def></def-item></def-list>
+    </sec>
+    <sec id="s3"><label>3</label><title>3. Results</title>
+      <sec id="s3a"><title>3.1. Lean mass</title>
+        <p>Lean mass rose: <inline-formula><mml:math><mml:mi>Δ</mml:mi><mml:mo>=</mml:mo><mml:mn>0.3</mml:mn></mml:math></inline-formula> kg.</p>
+      </sec>
+    </sec>
+    <sec id="s4" sec-type="results|discussion"><title>4. Findings in context</title>
+      <disp-quote><p>Higher intakes add little.</p></disp-quote>
+    </sec>
+  </body>
+</article>
