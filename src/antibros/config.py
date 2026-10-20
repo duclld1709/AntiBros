@@ -139,7 +139,12 @@ class EvalsetConfig(_Strict):
     verify_max_tokens: int = 512
     leakcheck_ngram: int = 8
     leakcheck_paths: list[Path] = Field(
-        default_factory=lambda: [Path("src"), Path("configs"), Path("prompts")]
+        default_factory=lambda: [
+            Path("src"),
+            Path("configs"),
+            Path("prompts"),
+            Path("frontend/src"),
+        ]
     )
 
 

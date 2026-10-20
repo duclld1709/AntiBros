@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from antibros.config import Settings, load_app_config, load_model_profile
@@ -38,7 +39,10 @@ def create_app(
     config_path: Path = Path("configs/baseline.yaml"),
     models_path: Path = Path("configs/models/laptop.yaml"),
     pipeline: RagPipeline | None = None,
+    ui_dir: Path | None = None,
 ) -> FastAPI:
+    """Build the API. When ``ui_dir`` holds a built frontend (``frontend/dist``), it is served
+    at ``/`` on the same origin, so the UI needs no CORS setup and runs with one command."""
     cfg = load_app_config(config_path)
     configure_logging(cfg.log_level)
     settings = Settings()
@@ -153,6 +157,9 @@ def create_app(
         )
         return {"status": "received"}
 
+    if ui_dir is not None and (ui_dir / "index.html").is_file():
+        # Mounted last: the API routes above take precedence over static files.
+        api.mount("/", StaticFiles(directory=ui_dir, html=True), name="ui")
     return api
 
 

@@ -1,5 +1,5 @@
 """``antibros evalset leakcheck``: no >= n-word n-gram of a question or key point may appear in
-``src/``, ``configs/`` or ``prompts/`` (spec §6.2).
+``src/``, ``configs/``, ``prompts/`` or the web UI sources ``frontend/src/`` (spec §6.2).
 
 Catches copy-paste of evalset text into prompts, few-shot examples, code or config. It does
 not catch paraphrases or "familiarity" (the author of the evalset also writes the pipeline);
@@ -28,6 +28,8 @@ TEXT_SUFFIXES = {
     ".jinja",
     ".cfg",
     ".ini",
+    ".ts",
+    ".tsx",
 }
 
 

@@ -15,7 +15,7 @@ dependencies = [
     "fastapi>=0.115",
     "google-genai>=1.0",
     "langgraph>=0.2",
-    "streamlit>=1.40",
+    "streamlit>=1.40",  # unused since the React UI (ADR-0022); drop with `uv remove streamlit`
     "uvicorn>=0.30",
     "structlog>=24.1",
     "torch>=2.5",
@@ -80,7 +80,9 @@ test = "pytest"
 check = ["lint", "typecheck", "test"]
 up = "docker compose up -d qdrant"
 api = "antibros serve"
-ui = "streamlit run ui/streamlit_app.py"
+ui = "python scripts/frontend.py dev"
+ui-build = "python scripts/frontend.py build"
+ui-check = "python scripts/frontend.py check"
 
 # --- Quality ---
 [tool.ruff]

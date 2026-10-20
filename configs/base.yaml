@@ -84,7 +84,7 @@ evalset:
   verify_max_revisions: 2
   verify_max_tokens: 512
   leakcheck_ngram: 8
-  leakcheck_paths: [src, configs, prompts]
+  leakcheck_paths: [src, configs, prompts, frontend/src]
 eval:
   runs_dir: experiments
   span_min_coverage: 0.5

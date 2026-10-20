@@ -396,3 +396,20 @@ def test_api_ask_returns_disclaimer_steps_and_writes_trace(tmp_path: Path) -> No
     )
     trace = json.loads((tmp_path / "traces.jsonl").read_text(encoding="utf-8").splitlines()[0])
     assert trace["trace_id"] == body["trace_id"] and trace["metadata"]["spans"]
+
+
+def test_api_serves_built_ui_without_shadowing_api_routes(tmp_path: Path) -> None:
+    from antibros.api import create_app
+
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html><title>AntiBros</title>", encoding="utf-8")
+    (dist / "assets" / "app.js").write_text("console.log('ok')", encoding="utf-8")
+    api = create_app(pipeline=StubPipeline(), ui_dir=dist)  # type: ignore[arg-type]
+    with TestClient(api) as http:
+        assert "AntiBros" in http.get("/").text
+        assert http.get("/assets/app.js").status_code == 200
+        assert http.get("/health").json() == {"status": "ok", "service": "antibros"}
+    no_ui = create_app(pipeline=StubPipeline(), ui_dir=tmp_path / "missing")  # type: ignore[arg-type]
+    with TestClient(no_ui) as http:
+        assert http.get("/").status_code == 404
