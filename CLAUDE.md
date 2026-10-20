@@ -55,14 +55,15 @@ antibros summarize experiments/<a> experiments/<b> [--out reports/<x>.md]
 antibros compare experiments/<a> experiments/<b>
 antibros plan lock --guard-run experiments/<g1> --guard-run experiments/<g2> --guard-run experiments/<g3>   # cuối M4
 antibros eval final --plan configs/final_eval_plan.yaml   # chỉ ở M5, hỏi chủ dự án trước
-antibros serve | uv run poe ui
+antibros serve                                 # API + UI đã build (frontend/dist) tại :8000
+uv run poe ui | uv run poe ui-build | uv run poe ui-check   # Vite dev server :5173 | build | lint+typecheck+test
 uv run python scripts/env_report.py            # GPU, driver, torch, Ollama, digest model
 ```
 - Nếu một tác vụ chưa có, thêm nó vào `[tool.poe.tasks]` trong `pyproject.toml` thay vì chạy lệnh dài thủ công. **Không dùng Makefile** (Windows không có `make`).
 - Không viết script `.sh` hay `.ps1` cho quy trình dev. Script tiện ích viết bằng Python để chạy được cả trên Windows và CI Linux.
 
 ## 4. Tech stack
-Python 3.11+ · uv · Typer · LangGraph · Qdrant · bge-m3 / bge-reranker-v2-m3 · PyTorch (CUDA, FP16) · Ollama (GGUF) · FastAPI + Pydantic · Streamlit · RAGAS · ruff · mypy · pytest · GitHub Actions · Docker Compose.
+Python 3.11+ · uv · Typer · LangGraph · Qdrant · bge-m3 / bge-reranker-v2-m3 · PyTorch (CUDA, FP16) · Ollama (GGUF) · FastAPI + Pydantic · React + TypeScript (Vite, `frontend/`) · RAGAS · ruff · mypy · pytest · GitHub Actions · Docker Compose.
 
 - **Laptop: Windows native.**
   - Ollama for Windows (native), Qdrant trong Docker Desktop (hoặc chế độ embedded `vector_store.mode: local`).

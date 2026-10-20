@@ -234,7 +234,7 @@ flowchart LR
   end
 
   subgraph ON["Online — LangGraph pipeline (một LLM)"]
-    U["User"] --> UI["Streamlit"] --> API["FastAPI /ask"]
+    U["User"] --> UI["Web UI (React)"] --> API["FastAPI /ask"]
     API --> IG{"input_guard"}
     IG -- "red flag" --> SR["Safety response"]
     IG -- "safe" --> QA["query_analyze<br/>detect lang, rewrite EN"]
@@ -296,11 +296,14 @@ Chi tiết đã chốt ở M4 (ADR-0021):
 ```
 Ngoài ra có `GET /health` và `POST /feedback`.
 
-### 5.5 UI (Streamlit)
+### 5.5 UI (React + Vite, `frontend/`; ADR-0022)
+- Single-page app viết bằng React + TypeScript, build bằng Vite. Bản build `frontend/dist` do chính `antibros serve` phục vụ (cùng origin với API, không cần CORS). Khi dev thì dùng Vite dev server có proxy sang API.
+- Giao diện song ngữ Việt/Anh, theme sáng/tối, chủ đề fitness; bộ lọc năm và mức bằng chứng; thẻ "bro-science" để kiểm chứng nhanh; lưu lịch sử câu hỏi trong trình duyệt.
 - Ô hỏi đáp; citation click được.
 - Panel nguồn có badge mức bằng chứng.
 - Badge trạng thái: Answered / Insufficient evidence / Safety.
-- Tab Debug: chunk được retrieve, điểm rerank, latency từng bước.
+- Tab Debug (Pipeline): chunk được retrieve, điểm rerank, latency từng bước.
+- Câu hỏi mẫu trong UI do Claude Code tự viết, không lấy từ evalset; `leakcheck` quét cả `frontend/src`.
 
 ---
 
@@ -474,7 +477,7 @@ Chi tiết vận hành nằm ở `docs/runbooks/final_eval.md`. Cấu hình máy
 | Embedding / rerank | FlagEmbedding hoặc sentence-transformers, PyTorch (CUDA, FP16) |
 | LLM runtime (dev/eval) | Ollama for Windows (GGUF), API tương thích OpenAI |
 | LLM (production sau này) | OpenAI / Gemini qua adapter |
-| API / UI | FastAPI + Pydantic / Streamlit |
+| API / UI | FastAPI + Pydantic / React + TypeScript (Vite) |
 | Eval | `antibros.eval` + RAGAS (qua wrapper) |
 | Tracing | jsonl / Langfuse |
 | Quality | ruff, mypy, pytest, pre-commit |
@@ -506,6 +509,7 @@ Chi tiết vận hành nằm ở `docs/runbooks/final_eval.md`. Cấu hình máy
 | `lint` | ruff |
 | `typecheck` | mypy |
 | `test` | pytest trên **`windows-latest` và `ubuntu-latest`**, bỏ qua integration, dùng provider `fake` và Qdrant `:memory:` |
+| `frontend` | ESLint, `tsc`, Vitest (API được mock) và `vite build` cho `frontend/` |
 | `evalset-verify` | Kiểm tra checksum của evalset + `evalset leakcheck`, trên cả Windows và Linux (bắt lỗi CRLF) |
 | `docker-build` | Build image API và UI |
 | `compose-smoke` | Mini corpus (3 bài CC BY, đã chunk sẵn) + embedder/LLM `fake`; gọi `/health` và 1 câu `/ask` |
@@ -520,7 +524,7 @@ docker compose up
 - Chạy trên **Docker Desktop** (Linux containers). Image vẫn là Linux, vì đó là môi trường triển khai.
 - Service `init` chạy `antibros ingest` theo manifest (tải 12 bài từ Europe PMC, kiểm tra sha256) và `antibros index` vào Qdrant. Model embedding và reranker được tải vào volume.
 - **Trên Windows,** container `api` gọi **Ollama native** của máy qua `http://host.docker.internal:11434` (mặc định trong `.env.example`). Service `ollama` trong compose chỉ bật với profile `ollama`, dành cho máy Linux.
-- Tiếp theo `qdrant` → `api` → `ui` khởi động theo healthcheck. UI chạy ở `http://localhost:8501`.
+- Tiếp theo `qdrant` → `api` khởi động theo healthcheck. Image `api` build sẵn `frontend/dist`, nên UI chạy ngay ở `http://localhost:8000`.
 - Embedding và reranker trong container dùng GPU nếu Docker Desktop có hỗ trợ GPU NVIDIA; nếu không thì chạy CPU (chậm hơn).
 - Đổi sang API provider bằng `.env` (`LLM_PROVIDER=openai|gemini`) mà không đổi code.
 - `scripts/fresh_clone_test.py` clone repo vào thư mục tạm, chạy compose với provider `fake`, rồi kiểm tra `/health` và `/ask`.
@@ -531,7 +535,7 @@ docker compose up
   - 0001 Qdrant · 0002 Hybrid RRF · 0003 bge-m3 · 0004 Section-aware chunking · 0005 LangGraph · 0006 Citation verification · 0007 Abstain policy · 0008 Chỉ dùng dữ liệu open access
   - 0009 Evalset đóng băng & tag theo milestone · 0010 Evalset do Claude Code soạn, không có người review · 0011 Dev bằng LLM local, client không phụ thuộc provider · 0012 Pipeline một LLM, judge khác họ
   - 0013 Chỉ dùng laptop, corpus ngách nhỏ, ngân sách thời gian eval · 0014 Đánh giá cuối trên test khai báo trước · 0015 Nhãn relevance theo evidence span · 0016 Môi trường phát triển Windows native · 0017 Adapter Ollama native · 0018 Quy tắc clean JATS và evidence level
-  - 0019 Verifier evalset qwen3.5:4b · 0020 LLM judge · 0021 Ghép pipeline M4, kế thừa config và fallback
+  - 0019 Verifier evalset qwen3.5:4b · 0020 LLM judge · 0021 Ghép pipeline M4, kế thừa config và fallback · 0022 Web UI React (Vite) thay Streamlit
 
 ---
 
@@ -558,7 +562,7 @@ antibros/
 │   ├── generation/ · guardrails/ · graph/ · api/ · tracing/
 │   ├── evalset/                                 # build, checks, verify_with_models, freeze, leakcheck
 │   └── eval/                                    # metrics/, predict.py, judge.py, report.py, compare.py, bootstrap.py, final.py
-├── ui/streamlit_app.py
+├── frontend/                                    # React + Vite + TypeScript (src/, package.json); build → frontend/dist
 ├── scripts/                                     # env_report.py, vram_probe.py, fresh_clone_test.py (Python, chạy trên Windows và Linux)
 ├── tests/                                       # unit/, adapters/ (fixture HTTP), contracts/, fixtures/ (JATS mẫu, mini_corpus/)
 ├── experiments/                                 # kết quả từng run (commit) + test_runs.log
