@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run poe lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run poe typecheck
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Keep LF on Windows checkout
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      # Same lockfile as the laptop: Windows runners get the CUDA torch wheel (runs on CPU
+      # there), Linux runners the CPU wheel. Unit tests never load a real model.
+      - run: uv sync --locked
+      - run: uv run poe test
