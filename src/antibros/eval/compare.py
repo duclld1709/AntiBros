@@ -7,13 +7,18 @@ are only reported. Differences whose CI contains 0 are flagged as not significan
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import numpy.typing as npt
+
 from antibros.config import EvalConfig
-from antibros.eval.bootstrap import paired_bootstrap
+from antibros.eval.bootstrap import Indices, paired_bootstrap, paired_bootstrap_stat
 from antibros.eval.fingerprint import compare_fingerprints
+from antibros.eval.metrics.generation import abstention_f1
 from antibros.eval.report import is_number
 from antibros.io import read_json, read_jsonl
 
@@ -34,14 +39,22 @@ class Comparison:
     metrics: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
-def compare_runs(run_a: Path, run_b: Path, cfg: EvalConfig) -> Comparison:
+def compare_runs(
+    run_a: Path, run_b: Path, cfg: EvalConfig, where: Mapping[str, str] | None = None
+) -> Comparison:
+    """Paired comparison over the items both runs have; ``where`` keeps only items whose
+    per-item row matches every ``key: value`` (e.g. ``{"language": "vi"}``)."""
     fa, fb = read_json(run_a / "fingerprint.json"), read_json(run_b / "fingerprint.json")
     hard, soft = compare_fingerprints(fa, fb)
     if hard:
         raise FingerprintMismatch(hard)
     rows_a = {r["id"]: r for r in read_jsonl(run_a / PER_ITEM)}
     rows_b = {r["id"]: r for r in read_jsonl(run_b / PER_ITEM)}
-    common = sorted(set(rows_a) & set(rows_b))
+    common = sorted(
+        i
+        for i in set(rows_a) & set(rows_b)
+        if all(str(rows_a[i].get(k)) == v for k, v in (where or {}).items())
+    )
     metrics = sorted(
         k
         for k in set().union(*(r.keys() for r in rows_a.values()))
@@ -63,7 +76,33 @@ def compare_runs(run_a: Path, run_b: Path, cfg: EvalConfig) -> Comparison:
             "mean_b": round(sum(b) / len(b), 6),
             **res.to_dict(),
         }
+    if common and all("expected_abstain" in rows_a[i] for i in common):
+        result.metrics["abstention_f1"] = _paired_f1(
+            [rows_a[i] for i in common], [rows_b[i] for i in common], cfg
+        )
     return result
+
+
+def _paired_f1(
+    rows_a: list[dict[str, Any]], rows_b: list[dict[str, Any]], cfg: EvalConfig
+) -> dict[str, Any]:
+    """Abstention F1 is a corpus-level statistic, so its paired CI resamples items jointly."""
+    exp = np.array([r["expected_abstain"] for r in rows_a], dtype=bool)
+    got_a = np.array([r["predicted_abstain"] for r in rows_a], dtype=bool)
+    got_b = np.array([r["predicted_abstain"] for r in rows_b], dtype=bool)
+
+    def f1(got: npt.NDArray[np.bool_]) -> Callable[[Indices], float]:
+        return lambda idx: abstention_f1(list(exp[idx]), list(got[idx]))
+
+    res = paired_bootstrap_stat(
+        len(exp), f1(got_a), f1(got_b), cfg.bootstrap_n, cfg.bootstrap_seed, cfg.ci_level
+    )
+    all_idx: Indices = np.arange(len(exp), dtype=np.int64)
+    return {
+        "mean_a": round(f1(got_a)(all_idx), 6),
+        "mean_b": round(f1(got_b)(all_idx), 6),
+        **res.to_dict(),
+    }
 
 
 def render_markdown(cmp: Comparison, name_a: str, name_b: str) -> str:

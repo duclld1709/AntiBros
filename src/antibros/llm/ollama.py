@@ -107,3 +107,25 @@ class OllamaClient(LLMClient):
     def unload(self) -> None:
         """Evict the model from VRAM (``keep_alive: 0``)."""
         self._http.post("/api/generate", json={"model": self.model, "keep_alive": 0})
+
+
+def installed_digests(
+    base_url: str, timeout_s: float = 10.0, transport: httpx.BaseTransport | None = None
+) -> dict[str, str]:
+    """``model name -> digest`` of every model the Ollama server has pulled (``/api/tags``).
+
+    ``eval final`` compares these with the digests pinned in the plan, so a re-pulled tag
+    that now points to different weights is caught before the test split is touched."""
+    with httpx.Client(
+        base_url=native_base_url(base_url), timeout=timeout_s, transport=transport
+    ) as http:
+        resp = http.get("/api/tags")
+        resp.raise_for_status()
+        models = resp.json().get("models", [])
+    out: dict[str, str] = {}
+    for m in models:
+        digest = str(m.get("digest", "")).removeprefix("sha256:")
+        for key in ("name", "model"):
+            if m.get(key):
+                out[str(m[key])] = digest
+    return out

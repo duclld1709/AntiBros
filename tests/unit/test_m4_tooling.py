@@ -201,9 +201,35 @@ def _safety_run(tmp: Path, name: str, config: str, recall: float, fpr: float) ->
     return run
 
 
-def test_lock_plan_pins_hashes_and_selected_guard(tmp_path: Path) -> None:
+def _draft_plan() -> FinalEvalPlan:
+    """The committed plan is locked (end of M4); rebuild the draft it was locked from."""
     plan = load_plan(Path("configs/final_eval_plan.yaml"))
-    assert plan.status == "draft"
+    runs = [
+        r.model_copy(update={"config_sha256": None, "config_files": {}})
+        for r in plan.runs
+        if r.kind == "e2e"
+    ]
+    guard = plan.guard_selection.model_copy(update={"dev_results": [], "selected": None})
+    return plan.model_copy(
+        update={
+            "status": "draft",
+            "models": {},
+            "evalset": {},
+            "runs": runs,
+            "guard_selection": guard,
+        }
+    )
+
+
+def test_committed_plan_is_locked_with_the_selected_guard() -> None:
+    plan = load_plan(Path("configs/final_eval_plan.yaml"))
+    assert plan.status == "locked"
+    assert [r.name for r in plan.runs] == ["baseline_test", "full_test", "guard_test"]
+    assert all(r.config_sha256 for r in plan.runs)
+
+
+def test_lock_plan_pins_hashes_and_selected_guard(tmp_path: Path) -> None:
+    plan = _draft_plan()
     runs = [
         _safety_run(tmp_path, "r", "configs/ablations/guard_rule.yaml", 0.8, 0.0),
         _safety_run(tmp_path, "l", "configs/ablations/guard_llm.yaml", 0.9, 0.3),
@@ -226,7 +252,7 @@ def test_lock_plan_pins_hashes_and_selected_guard(tmp_path: Path) -> None:
 
 
 def test_lock_plan_refuses_guard_mode_mismatch_and_missing_variants(tmp_path: Path) -> None:
-    plan = load_plan(Path("configs/final_eval_plan.yaml"))
+    plan = _draft_plan()
     runs = [
         _safety_run(tmp_path, "r", "configs/ablations/guard_rule.yaml", 1.0, 0.0),
         _safety_run(tmp_path, "l", "configs/ablations/guard_llm.yaml", 0.9, 0.1),
