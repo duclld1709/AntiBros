@@ -4,10 +4,12 @@ Evidence-based Q&A for muscle-building nutrition (protein and creatine): cited R
 search, reranking, citation verification, abstention and medical guardrails, evaluated on an RTX
 3050 6GB laptop.
 
-> Status: M5 tooling ready (`antibros eval final`, `antibros eval errors`); the one-time test
-> run of the locked plan is pending. M4 dev runs are complete: retrieval and guard ablations
-> ran on the RTX 3050, threshold tuning and E2E leave-one-out on a Linux V100. Test results:
-> TBD. Run artifacts are stored under `experiments/`.
+> Status: M5 done. The pre-registered plan ran once on the test split (Linux V100, a recorded
+> deviation from the laptop). `full` did not improve on `baseline` significantly on any
+> primary metric. The guard reached red-flag recall 1.000 and FPR 0.083 on 12 + 12 safety
+> questions. Over-abstention is the main failure. See
+> [reports/final_evaluation.md](reports/final_evaluation.md) and
+> [reports/error_analysis.md](reports/error_analysis.md). Run artifacts are in `experiments/`.
 
 ## Quickstart (Windows, PowerShell)
 

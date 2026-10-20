@@ -13,7 +13,7 @@ AntiBros là trợ lý hỏi đáp dinh dưỡng tăng cơ (**protein & creatine
 👉 **Trước mỗi task, đọc `PROJECT_SPEC.md` và `docs/milestones/<milestone hiện tại>.md`.** Trước khi chạy đánh giá cuối, đọc thêm `docs/runbooks/final_eval.md`.
 
 ## Milestone hiện tại
-**M5 — Đánh giá cuối & phân tích lỗi** (công cụ đã xong; chờ diễn tập và chạy chính thức trên máy có GPU, xem `docs/runbooks/final_eval.md`)
+**M6 — Report, đóng gói & showcase** (M5 xong, tag `m5`; kết quả test ở `reports/final_evaluation.md`)
 
 ---
 

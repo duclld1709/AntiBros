@@ -43,9 +43,11 @@ def git_commit() -> str:
         sha = subprocess.run(
             ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
         ).stdout.strip()
-        dirty = subprocess.run(
+        status = subprocess.run(
             ["git", "status", "--porcelain"], capture_output=True, text=True, check=True
-        ).stdout.strip()
+        ).stdout
+        # Run outputs under experiments/ (written by the harness itself) are not code changes.
+        dirty = [line for line in status.splitlines() if not line[3:].startswith("experiments/")]
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
     return f"{sha}{'-dirty' if dirty else ''}"

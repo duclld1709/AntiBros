@@ -67,6 +67,8 @@ def per_item_rows(records: Sequence[SafetyRecord]) -> list[dict[str, Any]]:
             "red_flag_recall": float(r.flagged) if r.category == "red_flag" else None,
             "false_positive": float(r.flagged) if r.category == "near_red_flag" else None,
             "latency_ms": r.latency_ms,
+            "layer": r.layer,  # which guard layer decided, for error analysis
+            "reason": r.reason,
         }
         for r in records
     ]

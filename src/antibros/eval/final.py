@@ -108,6 +108,25 @@ def ollama_digests(spec: ModelSpec) -> str | None:
     return installed_digests(Settings().llm_base_url).get(spec.model)
 
 
+def torch_cuda_available() -> bool:
+    try:
+        import torch
+    except ImportError:  # pragma: no cover - torch is a dependency
+        return False
+    return bool(torch.cuda.is_available())
+
+
+def cuda_devices(cfg: AppConfig) -> list[str]:
+    """Components of a config pinned to ``cuda`` (``auto`` silently falls back to CPU)."""
+    out = []
+    if cfg.rerank.enabled and cfg.rerank.device == "cuda":
+        out.append("rerank")
+    emb = cfg.embedders.get(cfg.retrieval.embedder)
+    if emb is not None and emb.device == "cuda":
+        out.append(f"embedder {cfg.retrieval.embedder}")
+    return out
+
+
 # --- log ----------------------------------------------------------------------------------
 
 
@@ -162,6 +181,7 @@ def preflight(
     evalset_dir: Path,
     installed_digest: Callable[[ModelSpec], str | None],
     rehearsal: bool,
+    cuda_available: Callable[[], bool] = torch_cuda_available,
 ) -> list[str]:
     """Every reason the plan must not run; empty when it may."""
     problems: list[str] = []
@@ -180,6 +200,13 @@ def preflight(
             continue
         if sha != run.config_sha256 or files != run.config_files:
             problems.append(f"{run.name}: {run.config.as_posix()} no longer matches the plan")
+        needs = cuda_devices(load_app_config(run.config))
+        if needs and not cuda_available():
+            # Checked up front: otherwise earlier runs complete on CPU and this one fails
+            # mid-plan, leaving the plan's runs on different hardware (M5 deviation).
+            problems.append(
+                f"{run.name}: {', '.join(needs)} need CUDA, but torch reports no CUDA device"
+            )
     if file_sha256(plan.models_profile) != plan.models.get("profile_sha256"):
         problems.append(f"{plan.models_profile.as_posix()} changed since the plan was locked")
     profile = load_model_profile(plan.models_profile)
@@ -230,6 +257,7 @@ class FinalDeps:
     safety: Callable[[AppConfig], list[SafetyItem]]
     hardware: Callable[[], str]
     installed_digest: Callable[[ModelSpec], str | None] = ollama_digests
+    cuda_available: Callable[[], bool] = torch_cuda_available
     echo: Callable[[str], None] = lambda msg: log.info("eval_final", msg=msg)
 
 
@@ -301,6 +329,7 @@ def run_plan(
         git=git,
         evalset_dir=evalset_dir,
         installed_digest=deps.installed_digest,
+        cuda_available=deps.cuda_available,
         rehearsal=rehearsal,
     )
     if problems:
@@ -590,8 +619,9 @@ def _ci(v: Mapping[str, Any]) -> str:
 
 def _table(cmp: Comparison) -> list[str]:
     out = [
-        "| Metric | A (baseline) | B (full) | B - A | 95% CI | Significant |",
-        "|---|---|---|---|---|---|",
+        # n = items where both runs have the metric (judge scores need both runs to answer).
+        "| Metric | n | A (baseline) | B (full) | B - A | 95% CI | Significant |",
+        "|---|---|---|---|---|---|---|",
     ]
     order = [m for m in PRIMARY if m in cmp.metrics] + [m for m in cmp.metrics if m not in PRIMARY]
     for m in order:
@@ -599,7 +629,7 @@ def _table(cmp: Comparison) -> list[str]:
         name = f"**{m}**" if m in PRIMARY else m
         sig = "yes" if r["significant"] else "no (CI contains 0)"
         out.append(
-            f"| {name} | {r['mean_a']:.3f} | {r['mean_b']:.3f} | {r['diff']:+.3f} | "
+            f"| {name} | {r['n']} | {r['mean_a']:.3f} | {r['mean_b']:.3f} | {r['diff']:+.3f} | "
             f"[{r['low']:+.3f}, {r['high']:+.3f}] | {sig} |"
         )
     return out

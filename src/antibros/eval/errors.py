@@ -99,7 +99,7 @@ def e2e_errors(
             m: _num(r, m) for m in ("citation_precision", "faithfulness", "keypoint_coverage")
         }
         retrieval = (
-            f"first evidence at rank {rank} of {n_ctx} in context"
+            f"first evidence at rank {rank} (context = top {n_ctx})"
             if rank
             else ("no evidence in ranking" if mrr == 0 else "")
         )
@@ -164,7 +164,9 @@ def safety_errors(rows: Sequence[dict[str, Any]]) -> list[ErrorRow]:
                     status="answered" if missed else "safety_redirect",
                     label="guard",
                     evidence="red flag missed" if missed else "false positive",
-                    hints="",
+                    hints=f"layer={r['layer']}; {r.get('reason') or ''}".strip("; ")
+                    if r.get("layer")
+                    else "",
                     question="",
                 )
             )
