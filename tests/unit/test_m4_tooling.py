@@ -264,8 +264,24 @@ def test_lock_plan_refuses_guard_mode_mismatch_and_missing_variants(tmp_path: Pa
         lock_plan(plan, runs[:2], Path("evalsets/v1"))
 
 
-def test_test_runs_log_is_empty() -> None:
-    assert Path("experiments/test_runs.log").read_text(encoding="utf-8") == ""
+def test_test_runs_log_matches_the_locked_plan() -> None:
+    """After M5: every entry belongs to the locked plan, each planned run completed exactly
+    once, and a re-run (attempt 1) only follows a failed attempt (ADR-0014)."""
+    from antibros.eval.final import read_log
+    from antibros.eval.plan import file_sha256
+
+    plan_path = Path("configs/final_eval_plan.yaml")
+    entries = read_log(Path("experiments/test_runs.log"))
+    planned = [r.name for r in load_plan(plan_path).runs]
+    assert {e.plan_sha256 for e in entries} <= {file_sha256(plan_path)}
+    for name in planned:
+        mine = [e for e in entries if e.run == name]
+        if not mine:
+            continue  # not run yet
+        assert sum(e.status == "completed" for e in mine) == 1, name
+        if any(e.attempt == 1 for e in mine):
+            assert any(e.attempt == 0 and e.status == "failed" for e in mine), name
+        assert max(e.attempt for e in mine) <= 1, name
 
 
 # --- e2e report: retrieval metrics from the recorded ranking -------------------------------

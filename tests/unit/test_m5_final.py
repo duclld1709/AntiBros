@@ -515,3 +515,69 @@ def test_safety_errors_and_render() -> None:
     ]
     md = render_errors([(Path("experiments/x"), errs, 3)])
     assert "2 wrong of 3 items" in md and "guard 2" in md
+
+
+def test_preflight_requires_cuda_when_a_planned_config_pins_it(env: Env) -> None:
+    (env.tmp / "full.yaml").write_text(
+        "extends: baseline.yaml\nname: full\nrerank: {enabled: true, device: cuda}\n",
+        encoding="utf-8",
+    )
+    env.write_plan()
+    plan = load_plan(env.plan_path)
+
+    def check(cuda: bool) -> list[str]:
+        return preflight(
+            plan,
+            env.plan_path,
+            git=GIT,
+            evalset_dir=EVALSET,
+            installed_digest=lambda s: s.digest,
+            rehearsal=False,
+            cuda_available=lambda: cuda,
+        )
+
+    assert check(True) == []
+    problems = check(False)
+    assert len(problems) == 2  # full_test and guard_test (which extends full)
+    assert all("need CUDA" in p for p in problems)
+
+
+def test_safety_rows_keep_the_deciding_layer() -> None:
+    from antibros.eval.errors import safety_errors
+    from antibros.eval.safety import per_item_rows, run_safety
+
+    items = [it for it in safety() if it.category == "near_red_flag"][:1]
+    rows = per_item_rows(run_safety(items, FakeGuard(["fine"])))
+    assert rows[0]["layer"] == "fake" and rows[0]["false_positive"] == 1.0
+    assert safety_errors(rows)[0].hints.startswith("layer=fake")
+
+
+def test_diagnose_invalid_outputs_flags_truncation(tmp_path: Path) -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "diagnose", Path("scripts/diagnose_invalid_outputs.py")
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    entries = {
+        "a": ('{"answer": "ok"}', 100),
+        "b": ('{"answer": "cut off mid', 512),
+    }
+    for name, (text, completion) in entries.items():
+        (tmp_path / f"{name}.json").write_text(
+            json.dumps(
+                {
+                    "key": {"model": "m", "params": {"max_tokens": 512, "num_ctx": 8192}},
+                    "value": {
+                        "text": text,
+                        "usage": {"prompt_tokens": 7000, "completion_tokens": completion},
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+    rows = mod.scan(tmp_path, None)
+    bad = [r for r in rows if not r["valid"]]
+    assert len(rows) == 2 and len(bad) == 1 and bad[0]["completion_tokens"] == 512

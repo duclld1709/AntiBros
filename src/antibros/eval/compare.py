@@ -23,7 +23,16 @@ from antibros.eval.report import is_number
 from antibros.io import read_json, read_jsonl
 
 PER_ITEM = "per_item.jsonl"
-NON_METRIC_KEYS = {"id", "language", "category", "status", "n_spans", "retrieved"}
+NON_METRIC_KEYS = {
+    "id",
+    "language",
+    "category",
+    "status",
+    "n_spans",
+    "retrieved",
+    "layer",
+    "reason",
+}
 
 
 class FingerprintMismatch(ValueError):
