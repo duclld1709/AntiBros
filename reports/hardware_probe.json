@@ -1,0 +1,111 @@
+{
+  "combo": {
+    "decode_tok_s_with_encoders": 36.5,
+    "llm": "qwen3.5:4b",
+    "llm_fully_on_gpu": true,
+    "llm_size_vram_mib": 3209,
+    "vram_total_mib": 6144,
+    "vram_used_after_mib": 5821,
+    "vram_used_before_mib": 873
+  },
+  "date": "2026-10-20 13:51",
+  "display": {
+    "display_active": "Enabled",
+    "display_mode": "[Requested functionality has been deprecated]"
+  },
+  "encoders": [
+    {
+      "batch16_seconds_incl_load": 106.06,
+      "model": "bge-m3",
+      "torch_peak_allocated_mib": 1147,
+      "vram_delta_mib": 1346
+    },
+    {
+      "batch16_seconds_incl_load": 108.79,
+      "model": "bge-reranker-v2-m3",
+      "torch_peak_allocated_mib": 1148,
+      "vram_delta_mib": 1108
+    }
+  ],
+  "idle_vram_used_mib": 548,
+  "llm": [
+    {
+      "completion_tokens": 167,
+      "decode_tok_s": 41.9,
+      "fully_on_gpu": true,
+      "latency_s": 6.41,
+      "model": "qwen3.5:4b",
+      "num_ctx": 4096,
+      "ollama_size_mib": 2995,
+      "ollama_size_vram_mib": 2995,
+      "prefill_tok_s": 958.7,
+      "prompt_tokens": 2185,
+      "vram_delta_mib": 3751
+    },
+    {
+      "completion_tokens": 135,
+      "decode_tok_s": 42.3,
+      "fully_on_gpu": true,
+      "latency_s": 4.4,
+      "model": "qwen3.5:4b",
+      "num_ctx": 8192,
+      "ollama_size_mib": 3209,
+      "ollama_size_vram_mib": 3209,
+      "prefill_tok_s": 1947.1,
+      "prompt_tokens": 2185,
+      "vram_delta_mib": 4016
+    },
+    {
+      "completion_tokens": 126,
+      "decode_tok_s": 54.8,
+      "fully_on_gpu": true,
+      "latency_s": 4.4,
+      "model": "gemma4:e4b",
+      "num_ctx": 4096,
+      "ollama_size_mib": 340,
+      "ollama_size_vram_mib": 340,
+      "prefill_tok_s": 1066.1,
+      "prompt_tokens": 2182,
+      "vram_delta_mib": 4577
+    },
+    {
+      "completion_tokens": 133,
+      "decode_tok_s": 50.1,
+      "fully_on_gpu": true,
+      "latency_s": 4.33,
+      "model": "gemma4:e4b",
+      "num_ctx": 8192,
+      "ollama_size_mib": 352,
+      "ollama_size_vram_mib": 352,
+      "prefill_tok_s": 1384.5,
+      "prompt_tokens": 2182,
+      "vram_delta_mib": 4554
+    },
+    {
+      "completion_tokens": 105,
+      "decode_tok_s": 58.0,
+      "fully_on_gpu": true,
+      "latency_s": 2.39,
+      "model": "qwen3.5:2b",
+      "num_ctx": 4096,
+      "ollama_size_mib": 2255,
+      "ollama_size_vram_mib": 2255,
+      "prefill_tok_s": 4084.8,
+      "prompt_tokens": 2185,
+      "vram_delta_mib": 3033
+    },
+    {
+      "completion_tokens": 127,
+      "decode_tok_s": 58.3,
+      "fully_on_gpu": true,
+      "latency_s": 2.77,
+      "model": "qwen3.5:2b",
+      "num_ctx": 8192,
+      "ollama_size_mib": 2367,
+      "ollama_size_vram_mib": 2367,
+      "prefill_tok_s": 4012.6,
+      "prompt_tokens": 2185,
+      "vram_delta_mib": 3107
+    }
+  ]
+}
