@@ -1,0 +1,44 @@
+# CI compose smoke test and scripts/fresh_clone_test.py: the full graph (guard, rewrite,
+# rerank, grade, verify) on the 3-article CC BY mini corpus with fake tokenizer, embedder,
+# reranker and LLM (configs/models/fake.yaml). Downloads no model, calls no LLM.
+extends: base.yaml
+name: smoke
+llm_cache:
+  enabled: false
+vector_store:
+  mode: server
+  collection_prefix: smoke
+chunking:
+  tokenizer: fake
+embedders:
+  fake:
+    kind: fake
+    dim: 64
+index:
+  chunkers: [section_aware]
+  embedders: [fake]
+retrieval:
+  chunker: section_aware
+  embedder: fake
+  mode: hybrid
+rerank:
+  enabled: true
+  kind: fake
+  device: cpu
+pipeline:
+  context_k: 5
+  query_rewrite:
+    enabled: true
+  grade:
+    enabled: true
+    min_rerank_score: 0.0
+  verify:
+    enabled: true
+guard:
+  mode: rule_llm
+  input_enabled: true
+  output_enabled: true
+reports_dir: data/reports
+tracing:
+  backend: jsonl
+  path: data/traces.jsonl

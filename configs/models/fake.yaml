@@ -1,0 +1,12 @@
+# Offline profile for CI and the Docker smoke test: every LLM answer is a schema-valid stub
+# (antibros.llm.fake.schema_stub). Never used for reported numbers.
+name: fake
+description: Deterministic stub LLM, no network.
+pipeline:
+  provider: fake
+  model: fake
+  digest: fake
+judge:
+  provider: fake
+  model: fake-judge
+  digest: fake

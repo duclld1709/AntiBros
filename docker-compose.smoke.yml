@@ -1,0 +1,20 @@
+# Offline smoke test (CI job compose-smoke, scripts/fresh_clone_test.py):
+#   docker compose -f docker-compose.yml -f docker-compose.smoke.yml up -d --build
+# Fake tokenizer, embedder, reranker and LLM on the 3-article CC BY mini corpus: no model
+# download, no Europe PMC request, no LLM.
+services:
+  init:
+    command:
+      - sh
+      - -c
+      - antibros ingest --config configs/smoke.yaml --from-jsonl tests/fixtures/mini_corpus/documents.jsonl && antibros index --config configs/smoke.yaml
+  api:
+    command:
+      - antibros
+      - serve
+      - --host
+      - 0.0.0.0
+      - --config
+      - configs/smoke.yaml
+      - --models
+      - configs/models/fake.yaml
