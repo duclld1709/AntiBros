@@ -2,7 +2,7 @@
 
 > Thứ tự chạy mọi thí nghiệm dev của M4, sau khi code M4 đã có trên `main`. Mọi lệnh chỉ dùng split **dev**. Không mở `golden.jsonl` hay `safety.jsonl` khi sửa prompt (CLAUDE.md §7.5). Mỗi run tạo một thư mục trong `experiments/`; commit chúng với prefix `exp:`.
 >
-> Lệnh viết cho PowerShell. Chạy `nvidia-smi --query-gpu=name,memory.total --format=csv` trước để chắc chắn đang ở laptop RTX 3050.
+> Lệnh viết cho PowerShell. Trước khi chạy, đo `nvidia-smi --query-gpu=name,memory.total --format=csv` và chọn `rerank.device` theo phần cứng thực tế trong `reports/hardware.md`. Ghi chú OOM CPU bên dưới là cho RTX 3050 6 GB; không áp dụng mặc định cho GPU khác. Phiên chạy Linux Tesla V100-PCIE-16GB đã dùng PyTorch CUDA 2.7.1+cu126 và `rerank.device: cuda`.
 
 ## 0. Chuẩn bị
 ```powershell

@@ -18,8 +18,14 @@ Users ask in Vietnamese or English; the corpus is English. The embedding model m
 **intfloat/multilingual-e5-large** is selected for the full pipeline. On golden dev, its MRR was significantly higher than bge-m3 (+0.195, 95% paired CI [+0.047, +0.370]); Recall@10 and nDCG@10 differences were not significant. The Vietnamese subset is reported separately in `reports/retrieval_ablation.md` and remains small (6 items).
 
 ## Evidence
-Planned runs: `configs/ablations/{retrieval_dense / retrieval_dense_e5}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:
-TBD — Evidence Recall@10 overall and for the `vi` subset (ADR-0015); indexing time; query latency.
+Completed dense BGE-M3 and dense E5 golden/synth runs are summarized in
+[`reports/retrieval_ablation.md`](../../reports/retrieval_ablation.md), with golden artifacts at
+`experiments/20261020-2050_retr_dense_golden/` and
+`experiments/20261020-2052_retr_dense_e5_golden/`. E5 vs BGE-M3 improved MRR by +0.195 (95%
+paired CI [+0.047, +0.370]); Recall@10 and nDCG@10 differences were inconclusive. The report
+includes the Vietnamese subset (n=6), where evidence recall and nDCG did not show a significant
+E5 advantage. On this V100 host, indexing all six collections took 119.96 s; per-collection
+embedding and upsert times are in [`reports/corpus_stats.md`](../../reports/corpus_stats.md).
 
 ## Consequences
 - **Positive:** one model covers dense + sparse; strong for Vietnamese queries.

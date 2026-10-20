@@ -1,7 +1,7 @@
 # ADR-0006: Post-hoc citation verification
 
-- **Status:** Proposed
-- **Date:** TBD
+- **Status:** Accepted
+- **Date:** 2026-10-20
 - **Milestone:** M4
 
 ## Context
@@ -15,7 +15,7 @@ Even with strict prompts, LLMs can attach a citation to a claim the chunk does n
 | NLI cross-encoder (entailment) | Cheap; local; deterministic | Weaker on long scientific chunks and numbers; another model competing for 6GB VRAM |
 
 ## Decision
-Proposed: **verification by the pipeline LLM itself**, with all claims checked in one batched call.
+**Verification by the pipeline LLM itself**, with all claims checked in one batched call.
 
 Rationale:
 - On a 6GB GPU only one LLM can stay resident next to the embedder and reranker (see ADR-0012).
@@ -33,7 +33,20 @@ renumbered after the drop.
 The independent judge (a different model family) measures citation precision/recall during evaluation, so the self-check bias is visible rather than hidden.
 
 ## Evidence
-TBD. Leave-one-out `loo_no_verify` vs `full` on dev: citation precision/recall, faithfulness, added latency p95. Final effect on test via the pre-registered `full` vs `baseline` comparison.
+The completed E2E leave-one-out results are in
+[`reports/m4_e2e_loo.md`](../../reports/m4_e2e_loo.md), comparing
+[`experiments/20261020-1533_m4_full/`](../../experiments/20261020-1533_m4_full/) with
+[`experiments/20261020-1541_m4_loo_no_verify/`](../../experiments/20261020-1541_m4_loo_no_verify/).
+Both runs used the `laptop` profile (pipeline `qwen3.5:4b`, judge `gemma4:e4b`) and 16 common
+golden dev items. Both had citation precision/recall 1.000 and faithfulness 0.993; the paired
+95% intervals showed no significant difference on those metrics. The full run marked 0.188 of
+claims as unsupported and removed them, versus 0.000 with verification disabled; this paired
+difference was also inconclusive at n=16 (95% CI [-0.500, 0.000]). Predict plus judge took
+165.67 s for full and remained within the 600 s budget. Latency comparisons were cache-heavy
+and are not treated as a clean estimate of verification's incremental cost. These small dev
+results support retaining the safety check while flagging that its measured quality effect is
+not statistically established. The final effect will be measured by the pre-registered `full`
+vs `baseline` test comparison.
 
 ## Consequences
 - **Positive:** measurable improvement on citation quality without a second resident model.

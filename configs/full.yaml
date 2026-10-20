@@ -6,7 +6,7 @@ extends: baseline.yaml
 name: full
 rerank:
   enabled: true
-  device: cpu
+  device: cuda
 retrieval:
   chunker: section_aware
   embedder: e5_large
@@ -20,6 +20,7 @@ pipeline:
     min_rerank_score: 0.1
   verify:
     enabled: true
+    max_removed_ratio: 0.75
 guard:
   mode: rule_llm
   input_enabled: true

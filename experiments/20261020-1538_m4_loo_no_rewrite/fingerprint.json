@@ -1,0 +1,18 @@
+{
+  "bootstrap_seed": 42,
+  "config_sha256": "a1d1f53e5d4d6db9d5089571ae39d8a845659011f2c1a1b25b99b429b8b89a85",
+  "corpus_manifest_sha256": "3cee8221d2a9558f8ab4c3128066961b18dff1170c2d95ceb5d54735480531df",
+  "eval_set": "golden",
+  "evalset_sha256": "0cba1766ba807ba75f481e966022cfe4bbca163dc89b407ab5d49d812c4d3e31",
+  "evalset_version": "v1",
+  "git_commit": "7e9121be767878c45520817f206046f823cc6d1f-dirty",
+  "hardware": "Tesla V100-PCIE-16GB",
+  "judge_digest": "dc35e8d9c6061baa6f0fa870975ab6932e2542b579b13ea0f199fa4bb7300c9c",
+  "judge_model": "gemma4:e4b",
+  "judge_temperature": 0.0,
+  "metric_set": "e2e-v1",
+  "pipeline_digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04",
+  "pipeline_model": "qwen3.5:4b",
+  "runtime_version": "python 3.12.15; antibros 0.1.0; torch 2.7.1+cu126",
+  "split": "dev"
+}

@@ -59,16 +59,16 @@ Section detection: **12/12** documents have at least 3 standard sections (abstra
 
 | Collection | Points | Model load (s) | Embed (s) | Upsert (s) |
 |---|---|---|---|---|
-| antibros_fixed_bge_m3 | 299 | 6.9 | 8.26 | 0.65 |
-| antibros_fixed_e5_large | 299 | 12.3 | 7.64 | 0.65 |
-| antibros_recursive_bge_m3 | 329 | 0.0 | 7.67 | 0.79 |
-| antibros_recursive_e5_large | 329 | 0.0 | 8.61 | 1.23 |
-| antibros_section_aware_bge_m3 | 393 | 0.0 | 8.34 | 0.78 |
-| antibros_section_aware_e5_large | 393 | 0.0 | 9.2 | 1.55 |
+| antibros_fixed_bge_m3 | 299 | 18.1 | 2.6 | 6.64 |
+| antibros_fixed_e5_large | 299 | 18.1 | 2.03 | 5.14 |
+| antibros_recursive_bge_m3 | 329 | 0.0 | 2.12 | 7.49 |
+| antibros_recursive_e5_large | 329 | 0.0 | 2.06 | 11.96 |
+| antibros_section_aware_bge_m3 | 393 | 0.0 | 2.3 | 6.96 |
+| antibros_section_aware_e5_large | 393 | 0.0 | 2.22 | 8.87 |
 
-- Ingest (fetch/cache, parse, clean): 0.47 s
-- Index (chunk all strategies + embed + upsert, last full run): 90.4 s
-- Total: 90.9 s (within the 10-minute budget)
+- Ingest (fetch/cache, parse, clean): 17.3 s
+- Index (chunk all strategies + embed + upsert, last full run): 119.96 s
+- Total: 137.3 s (within the 10-minute budget)
 
 ## File names under `data/`
 

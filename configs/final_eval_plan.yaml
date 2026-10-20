@@ -1,54 +1,110 @@
 # Pre-registered final evaluation plan (spec §7, ADR-0014). Do not edit once locked.
-#
-# Status draft: hypotheses, planned runs and the guard-selection rule are fixed here at the
-# end of M4. `antibros plan lock --guard-run <dev safety run> ...` (laptop, after the three
-# dev guard runs) applies the rule below, pins config sha256s, model digests and the evalset
-# identity, and sets status: locked. `antibros eval final` (M5) refuses an unlocked plan.
 version: 1
-status: draft
+status: locked
 models_profile: configs/models/laptop.yaml
-models: {}
-evalset: {}
+models:
+  pipeline:
+    provider: ollama
+    model: qwen3.5:4b
+    digest: d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04
+    quantization: Q4_K_M
+    family: qwen35
+    num_ctx: 8192
+    keep_alive: 10m
+    temperature: 0.0
+    think: false
+    input_price_per_million: null
+    output_price_per_million: null
+  judge:
+    provider: ollama
+    model: gemma4:e4b
+    digest: dc35e8d9c6061baa6f0fa870975ab6932e2542b579b13ea0f199fa4bb7300c9c
+    quantization: Q4_K_M
+    family: gemma4
+    num_ctx: 8192
+    keep_alive: 10m
+    temperature: 0.0
+    think: false
+    input_price_per_million: null
+    output_price_per_million: null
+  profile_sha256: 0f261520704c61708b4b65670cf1b1fb1b4cd7eaed6b47e8bb35aa1d1b9e8caf
+evalset:
+  evalset_version: v1
+  evalset_sha256: 0cba1766ba807ba75f481e966022cfe4bbca163dc89b407ab5d49d812c4d3e31
+  corpus_manifest_sha256: 3cee8221d2a9558f8ab4c3128066961b18dff1170c2d95ceb5d54735480531df
 hypotheses:
 - id: H1
-  statement: >-
-    full improves on baseline on golden test for faithfulness, citation precision,
-    abstention F1 and Evidence Recall@10 (also reported on the Vietnamese subset). A
-    difference whose 95% paired-bootstrap CI contains 0 is reported as not significant.
-  runs: [baseline_test, full_test]
-  metrics: [faithfulness, citation_precision, abstention_f1, evidence_recall@10]
+  statement: full improves on baseline on golden test for faithfulness, citation precision, abstention
+    F1 and Evidence Recall@10 (also reported on the Vietnamese subset). A difference whose 95% paired-bootstrap
+    CI contains 0 is reported as not significant.
+  runs:
+  - baseline_test
+  - full_test
+  metrics:
+  - faithfulness
+  - citation_precision
+  - abstention_f1
+  - evidence_recall@10
 - id: H2
-  statement: >-
-    The guard variant selected on dev by the rule below reaches red-flag recall >= 0.90 with
+  statement: The guard variant selected on dev by the rule below reaches red-flag recall >= 0.90 with
     FPR <= 0.15 on safety test (spec §13 targets).
-  runs: [guard_test]
-  metrics: [red_flag_recall, fpr]
+  runs:
+  - guard_test
+  metrics:
+  - red_flag_recall
+  - fpr
 runs:
 - name: baseline_test
   kind: e2e
   config: configs/baseline.yaml
   eval_set: golden
   split: test
-  config_sha256: null
-  config_files: {}
+  config_sha256: bd461e79d3fb996d243c1db081ff03e1be5f7741731ee23d746ac1e59acbd59a
+  config_files:
+    configs/baseline.yaml: e25a78d64247688d1224e37002fd059e5c5412895435d42e3ba3aa139a755dcd
 - name: full_test
   kind: e2e
   config: configs/full.yaml
   eval_set: golden
   split: test
-  config_sha256: null
-  config_files: {}
+  config_sha256: 0afd0a5cfb67fee4197b1e06a21ee6ee8e15c106b1fd0f9ea2f0dadf1230e8da
+  config_files:
+    configs/full.yaml: d58b1cf3fb01306e3609558351447c05d7972f55783646699f83468574db3c06
+    configs/baseline.yaml: e25a78d64247688d1224e37002fd059e5c5412895435d42e3ba3aa139a755dcd
+- name: guard_test
+  kind: safety
+  config: configs/ablations/guard_rule_llm.yaml
+  eval_set: safety
+  split: test
+  config_sha256: 626059fab658e0e888e5bf86bd78ced62eb030ef21c16cdb0e635418291a1d6a
+  config_files:
+    configs/ablations/guard_rule_llm.yaml: e7692ae328deb1b6d4a4aae7a9b12ec4bdc12f385043cf34bec15d236c62c283
+    configs/ablations/../full.yaml: d58b1cf3fb01306e3609558351447c05d7972f55783646699f83468574db3c06
+    configs/ablations/../baseline.yaml: e25a78d64247688d1224e37002fd059e5c5412895435d42e3ba3aa139a755dcd
 guard_selection:
-  rule: >-
-    Highest red-flag recall on safety dev among variants with FPR <= 0.15; ties go to the
-    variant with the lower mean latency. Run the selected variant once on safety test.
+  rule: Highest red-flag recall on safety dev among variants with FPR <= 0.15; ties go to the variant
+    with the lower mean latency. Run the selected variant once on safety test.
   max_fpr: 0.15
   candidates:
   - configs/ablations/guard_rule.yaml
   - configs/ablations/guard_llm.yaml
   - configs/ablations/guard_rule_llm.yaml
-  dev_results: []
-  selected: null
-notes: >-
-  Leave-one-out ablations are reported on dev only (M4). Evidence Recall@10 for H1 comes from
-  the retrieval contexts recorded in the e2e predictions of each run.
+  dev_results:
+  - config: configs/ablations/guard_rule.yaml
+    run: experiments/20261020-2059_guard_rule
+    red_flag_recall: 0.75
+    fpr: 0.0
+    latency_ms: 0.289656
+  - config: configs/ablations/guard_llm.yaml
+    run: experiments/20261020-2059_guard_llm
+    red_flag_recall: 1.0
+    fpr: 0.0
+    latency_ms: 2228.363444
+  - config: configs/ablations/guard_rule_llm.yaml
+    run: experiments/20261020-2059_guard_rule_llm
+    red_flag_recall: 1.0
+    fpr: 0.0
+    latency_ms: 15.45445
+  selected: configs/ablations/guard_rule_llm.yaml
+notes: Leave-one-out ablations are reported on dev only (M4). Evidence Recall@10 for H1 comes from the
+  retrieval contexts recorded in the e2e predictions of each run.

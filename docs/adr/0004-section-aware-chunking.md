@@ -18,8 +18,13 @@ Papers have a strong structure (abstract, methods, results, discussion). Answers
 **Section-aware** remains selected. Recursive chunking reduced golden dev evidence Recall@10 by 0.119 versus section-aware (95% paired CI [-0.238, -0.015]); fixed chunking had similar Recall@10, with a small significant MRR increase (+0.048, CI [+0.002, +0.101]). Section-aware remains the default because it preserves scientific section context while matching hybrid's retrieval quality on the main recall metric.
 
 ## Evidence
-Planned runs: `configs/ablations/{retrieval_fixed / retrieval_recursive / retrieval_hybrid}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:
-TBD — Evidence Recall@10 per strategy, scored from evidence spans so all strategies share one label set (ADR-0015); distribution of chunk sizes.
+Completed fixed, recursive, and section-aware runs on golden and synth are summarized in
+[`reports/retrieval_ablation.md`](../../reports/retrieval_ablation.md), with artifacts at
+`experiments/20261020-2046_retr_fixed_*`, `experiments/20261020-2047_retr_recursive_*`, and
+`experiments/20261020-2046_retr_hybrid_*`. Recursive vs hybrid changed Evidence Recall@10 by
+-0.119 (95% paired CI [-0.238, -0.015]); fixed vs hybrid changed it by -0.011 ([-0.141,
++0.124]). Corpus chunk counts and length distributions are recorded in
+[`reports/corpus_stats.md`](../../reports/corpus_stats.md).
 
 ## Consequences
 - **Positive:** better retrieval context; citations can show the section.

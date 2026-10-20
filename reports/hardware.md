@@ -91,4 +91,27 @@ API/UI smoke: `GET /health` returned 200; `POST /ask` returned an answered respo
 
 ## M4 tune OOM note (2026-10-20)
 
-The `grade_min_rerank_score` tuning run using the GPU reranker was interrupted after a VRAM OOM that crashed VS Code. Its partial run is preserved at `experiments/20261020-2100_tune_grade_min_rerank_score_0p02/` and has no metrics or timing, so it is not a completed evaluation. Following the runbook, `configs/base.yaml` and `configs/full.yaml` set `rerank.device: cpu` to free GPU memory before resuming the tuning grid. The resolved config for the first resume attempt still selected CUDA, so that attempt was stopped before the tuning grid completed; the full config now pins CPU explicitly.
+The `grade_min_rerank_score` tuning run using the GPU reranker was interrupted after a VRAM OOM that crashed VS Code. Its partial run is preserved at `experiments/20261020-2100_tune_grade_min_rerank_score_0p02/` and has no metrics or timing, so it is not a completed evaluation. Following the runbook, `configs/base.yaml` and `configs/full.yaml` were set to `rerank.device: cpu` to free GPU memory before resuming the tuning grid. The resolved config for the first resume attempt still selected CUDA, so that attempt was stopped before the tuning grid completed. This CPU workaround applied to the RTX 3050 and is not retained in `configs/full.yaml` for the V100 run.
+
+## Linux V100 run (2026-10-20)
+
+The M4 continuation ran on a headless Tesla V100-PCIE-16GB (16,384 MiB, driver 580.82.07,
+reported CUDA driver 13.0). Python is 3.12.15. The repository's Linux `uv sync` selects the
+CPU PyTorch wheel; the eval environment was therefore installed with PyTorch 2.7.1+cu126,
+which supports the V100's compute capability 7.0. A CUDA matrix operation completed on the
+V100. PyTorch 2.11.0+cu128 was also tried, but warned that its compiled kernels start at
+compute capability 7.5; it was replaced before evaluation.
+
+`configs/full.yaml` now selects `rerank.device: cuda` on this machine. This is based on an
+observed 16 GB V100 and successful CUDA execution, rather than carrying forward the RTX 3050
+OOM mitigation. During M4 prediction with `laptop` (`qwen3.5:4b`, digest
+`d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04`), sampled combined GPU
+memory use reached approximately 7.0 GiB while the E5 embedder, reranker, and Ollama pipeline
+model were active. Ollama reported the pipeline model at 100% GPU. The verify tuning grid used
+`laptop_light` with the same model digests across values; sampled use was approximately 6.2
+GiB. The 16 GB card leaves substantial headroom for this M4 workload.
+
+The original RTX 3050 partial runs remain in `experiments/`; they were not removed. All new
+verify threshold comparisons were rerun together on V100 with CUDA reranking. See
+[`_tune_verify.md`](_tune_verify.md) for the grid and [`_tune_grade.md`](_tune_grade.md) for
+the earlier, internally consistent `laptop_light` grade grid.
