@@ -1,0 +1,9 @@
+name: base
+log_level: INFO
+llm_cache:
+  enabled: true
+  dir: .llm_cache
+vector_store:
+  mode: server        # server (Docker Qdrant) | local (embedded, on disk) | memory (tests)
+  path: data/qdrant
+  collection: antibros
