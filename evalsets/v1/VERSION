@@ -1,0 +1,7 @@
+version=v1
+frozen_at=2026-10-20T09:07:41+00:00
+cleaning_version=1
+corpus_manifest_sha256=3cee8221d2a9558f8ab4c3128066961b18dff1170c2d95ceb5d54735480531df
+items_golden=46
+items_safety=40
+items_synth=94

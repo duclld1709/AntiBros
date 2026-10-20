@@ -37,3 +37,20 @@ jobs:
       # there), Linux runners the CPU wheel. Unit tests never load a real model.
       - run: uv sync --locked
       - run: uv run poe test
+
+  evalset-verify:
+    # Byte checksums of the frozen evalset + leakcheck, on both OSes: a Windows checkout
+    # that converted LF to CRLF would fail here (spec §10.2).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Keep LF on Windows checkout
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run antibros evalset verify
+      - run: uv run antibros evalset leakcheck
