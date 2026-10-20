@@ -47,4 +47,4 @@ def test_predict_rejects_bad_tag() -> None:
 
 
 def test_stub_exit_code() -> None:
-    assert runner.invoke(app, ["stats"]).exit_code == 2
+    assert runner.invoke(app, ["eval", "report", "--run", "x"]).exit_code == 2

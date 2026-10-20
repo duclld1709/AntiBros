@@ -1,14 +1,16 @@
-"""``antibros`` command-line interface. Subcommands are stubs until their milestone lands."""
+"""``antibros`` command-line interface. Later-milestone subcommands are stubs until they land."""
 
 from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, NoReturn
+from typing import Annotated, NoReturn, cast
 
 import typer
 
-from antibros.io import is_valid_run_tag
+from antibros.config import CHUNKER_NAMES, AppConfig, ChunkerName, load_app_config
+from antibros.io import is_valid_run_tag, write_json
+from antibros.logging import configure_logging
 
 app = typer.Typer(help="AntiBros: evidence-based protein & creatine Q&A.", no_args_is_help=True)
 evalset_app = typer.Typer(help="Build, verify and freeze evaluation sets.", no_args_is_help=True)
@@ -47,26 +49,127 @@ ModelsOpt = Annotated[Path, typer.Option("--models", help="Model profile YAML.")
 RunArg = Annotated[Path, typer.Option("--run", help="Experiment run directory.")]
 
 
+DEFAULT_CONFIG = Path("configs/base.yaml")
+
+
+def _load(config: Path) -> AppConfig:
+    cfg = load_app_config(config)
+    configure_logging(cfg.log_level)
+    return cfg
+
+
+@app.command()
+def manifest(
+    config: ConfigOpt = DEFAULT_CONFIG,
+    candidates: Annotated[Path | None, typer.Option(help="Candidate list YAML.")] = None,
+    out: Annotated[Path | None, typer.Option(help="Manifest JSONL to write.")] = None,
+) -> None:
+    """Verify corpus candidates via Europe PMC (OA, licence, year) and write the manifest."""
+    from antibros.ingestion.europepmc import EuropePMCClient
+    from antibros.ingestion.manifest import build_manifest, load_candidates, write_manifest
+
+    cfg = _load(config)
+    cands = load_candidates(candidates or cfg.ingestion.candidates)
+    with EuropePMCClient(cfg.ingestion.europepmc) as client:
+        entries, verification = build_manifest(client, cands)
+    write_json(
+        cfg.reports_dir / "corpus_verification.json",
+        [v.model_dump(mode="json", exclude={"entry"}) for v in verification],
+    )
+    counts = {t: sum(e.topic == t for e in entries) for t in cands.target}
+    if counts != cands.target:
+        typer.echo(f"Topic counts {counts} differ from target {cands.target}.", err=True)
+        raise typer.Exit(code=1)
+    path = out or cfg.ingestion.manifest
+    write_manifest(path, entries)
+    typer.echo(f"Wrote {len(entries)} entries to {path}")
+
+
 @app.command()
 def ingest(
-    manifest: Annotated[Path, typer.Option(help="Corpus manifest JSONL.")] = Path(
-        "evalsets/v1/corpus_manifest.jsonl"
-    ),
+    manifest: Annotated[Path | None, typer.Option(help="Corpus manifest JSONL.")] = None,
+    config: ConfigOpt = DEFAULT_CONFIG,
+    offline: Annotated[bool, typer.Option(help="Use cached data/raw only.")] = False,
 ) -> None:
     """Download and parse the corpus listed in the manifest (verifies sha256)."""
-    _todo("ingest", "M1")
+    from antibros.ingestion.europepmc import EuropePMCClient
+    from antibros.ingestion.pipeline import IngestError
+    from antibros.ingestion.pipeline import ingest as run_ingest
+
+    cfg = _load(config)
+    client = None if offline else EuropePMCClient(cfg.ingestion.europepmc)
+    try:
+        docs = run_ingest(
+            manifest or cfg.ingestion.manifest,
+            cfg.ingestion.raw_dir,
+            cfg.ingestion.processed_dir,
+            client,
+        )
+    except IngestError as exc:
+        typer.echo(f"Ingest failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    finally:
+        if client is not None:
+            client.close()
+    typer.echo(f"Ingested {len(docs)} documents into {cfg.ingestion.processed_dir}")
 
 
 @app.command()
-def index(config: ConfigOpt) -> None:
-    """Chunk, embed and index the corpus into Qdrant."""
-    _todo("index", "M1")
+def index(
+    config: ConfigOpt = DEFAULT_CONFIG,
+    chunker: Annotated[list[str] | None, typer.Option(help="Only these chunkers.")] = None,
+    embedder: Annotated[list[str] | None, typer.Option(help="Only these embedders.")] = None,
+) -> None:
+    """Chunk, embed and index the corpus into Qdrant (one collection per chunker x embedder)."""
+    from antibros.indexing.pipeline import run_index
+    from antibros.indexing.qdrant_store import make_client
+
+    cfg = _load(config)
+    unknown = set(chunker or []) - set(CHUNKER_NAMES)
+    if unknown:
+        typer.echo(f"Unknown chunker(s): {sorted(unknown)}", err=True)
+        raise typer.Exit(code=1)
+    client = make_client(cfg.vector_store)
+    try:
+        results = run_index(cfg, client, cast(list[ChunkerName], chunker) or None, embedder or None)
+    finally:
+        client.close()
+    for name, r in results.items():
+        typer.echo(f"{name}: {int(r['points'])} points")
 
 
 @app.command()
-def stats() -> None:
+def stats(config: ConfigOpt = DEFAULT_CONFIG) -> None:
     """Write corpus statistics to reports/corpus_stats.md."""
-    _todo("stats", "M1")
+    from antibros.stats import write_stats
+
+    typer.echo(f"Wrote {write_stats(_load(config))}")
+
+
+@app.command()
+def search(
+    query: str,
+    config: ConfigOpt = DEFAULT_CONFIG,
+    k: Annotated[int, typer.Option(help="Number of results.")] = 5,
+) -> None:
+    """Ad-hoc retrieval with the config's `retrieval:` settings (for manual checks)."""
+    from antibros.embedding.base import make_embedder
+    from antibros.indexing.qdrant_store import collection_name, make_client
+    from antibros.retrieval.base import make_retriever
+
+    cfg = _load(config)
+    r = cfg.retrieval
+    client = make_client(cfg.vector_store)
+    embedder = make_embedder(r.embedder, cfg.embedders[r.embedder])
+    coll = collection_name(cfg.vector_store.collection_prefix, r.chunker, r.embedder)
+    try:
+        hits = make_retriever(r, client, coll, embedder).retrieve(query, k)
+    finally:
+        embedder.close()
+        client.close()
+    for i, h in enumerate(hits, start=1):
+        snippet = str(h.payload.get("text", ""))[:160].replace("\n", " ")
+        typer.echo(f"{i}. {h.score:.4f} {h.chunk_id}\n   {snippet}")
 
 
 @evalset_app.command("build")
