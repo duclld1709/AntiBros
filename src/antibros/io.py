@@ -71,6 +71,52 @@ def read_json(path: Path) -> Any:
     return json.loads(read_text(path))
 
 
+def dumps_line(obj: Any) -> str:
+    """One JSONL line: compact, UTF-8 friendly, stable key order."""
+    return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def read_jsonl(path: Path) -> list[Any]:
+    """Read a JSONL file. A trailing partial line (interrupted append) is ignored."""
+    if not path.exists():
+        return []
+    rows = []
+    lines = read_text(path).split("\n")
+    for i, line in enumerate(lines):
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            if i == len(lines) - 1:  # last line without newline: interrupted write
+                break
+            raise
+    return rows
+
+
+def write_jsonl(path: Path, rows: list[Any]) -> None:
+    write_text(path, "".join(dumps_line(r) + "\n" for r in rows))
+
+
+def repair_jsonl_tail(path: Path) -> None:
+    """Drop a trailing partial line left by an interrupted append, so appends stay valid."""
+    if not path.exists():
+        return
+    data = path.read_bytes()
+    if data and not data.endswith(b"\n"):
+        cut = data.rfind(b"\n") + 1
+        write_bytes_atomic(path, data[:cut])
+
+
+def append_jsonl(path: Path, row: Any) -> None:
+    """Append one line and fsync it: a crash loses at most the line being written."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding=ENCODING, newline="\n") as f:
+        f.write(dumps_line(row) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+
+
 def is_valid_windows_filename(name: str) -> bool:
     """Return True if ``name`` is a valid single path component on Windows (and thus on Linux)."""
     if not name or name in {".", ".."} or len(name) > 255:

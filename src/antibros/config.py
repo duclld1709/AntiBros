@@ -113,6 +113,75 @@ class RetrievalConfig(_Strict):
     rrf_k: int = 60
 
 
+class EvalsetConfig(_Strict):
+    """Evalset construction and checks (spec §6.1-6.2). Targets are ``category/language``."""
+
+    dir: Path = Path("evalsets/v1")
+    version: str = "v1"
+    golden_targets: dict[str, int] = Field(default_factory=dict)
+    safety_targets: dict[str, int] = Field(default_factory=dict)
+    synth_per_doc: int = 8
+    golden_dev: int = 16
+    safety_dev: int = 16
+    split_seed: int = 42
+    max_lexical_overlap: float = 0.6
+    near_dup_jaccard: float = 0.8
+    near_dup_cosine: float = 0.92
+    dedup_embedder: str = "bge_m3"
+    unanswerable_top_k: int = 20
+    pool_k: int = 10
+    pool_chunker: ChunkerName = "section_aware"
+    pool_embedders: list[str] = Field(default_factory=lambda: ["bge_m3", "e5_large"])
+    verify_passages_per_call: int = 5
+    verify_max_revisions: int = 2
+    verify_max_tokens: int = 512
+    leakcheck_ngram: int = 8
+    leakcheck_paths: list[Path] = Field(
+        default_factory=lambda: [Path("src"), Path("configs"), Path("prompts")]
+    )
+
+
+class EvalConfig(_Strict):
+    """Eval harness settings (spec §6.3-6.8)."""
+
+    runs_dir: Path = Path("experiments")
+    span_min_coverage: float = 0.5  # ADR-0015: chunk covers >= 50% of a quote's characters
+    recall_ks: list[int] = Field(default_factory=lambda: [5, 10])
+    ndcg_k: int = 10
+    doc_recall_k: int = 3
+    bootstrap_n: int = 1000
+    bootstrap_seed: int = 42
+    ci_level: float = 0.95
+    budgets_s: dict[str, float] = Field(
+        default_factory=lambda: {
+            "retrieval": 120.0,
+            "safety_dev": 300.0,
+            "safety_test": 300.0,
+            "e2e_dev": 600.0,
+            "e2e_test": 1200.0,
+        }
+    )
+
+
+class PipelineConfig(_Strict):
+    """Which question-answering pipeline ``eval predict`` runs. ``rag`` lands in M3."""
+
+    kind: Literal["fake", "rag"] = "rag"
+
+
+class JudgeConfig(_Strict):
+    """Which judge ``eval judge`` uses. ``llm`` (prompts in ``prompts/``) lands in M3."""
+
+    kind: Literal["fake", "llm"] = "llm"
+    max_tokens: int = 512
+
+
+class GuardConfig(_Strict):
+    """Input guard used by ``eval safety``. Real modes land in M4."""
+
+    mode: Literal["fake", "rule", "llm", "rule_llm"] = "rule_llm"
+
+
 class AppConfig(_Strict):
     """Top-level pipeline config. Grows milestone by milestone; every step is toggleable."""
 
@@ -124,6 +193,12 @@ class AppConfig(_Strict):
     embedders: dict[str, EmbedderConfig] = Field(default_factory=dict)
     index: IndexConfig = Field(default_factory=IndexConfig)
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
+    evalset: EvalsetConfig = Field(default_factory=EvalsetConfig)
+    eval: EvalConfig = Field(default_factory=EvalConfig)
+    pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
+    judge: JudgeConfig = Field(default_factory=JudgeConfig)
+    guard: GuardConfig = Field(default_factory=GuardConfig)
+    prompts_dir: Path = Path("prompts")
     reports_dir: Path = Path("reports")
     log_level: str = "INFO"
 

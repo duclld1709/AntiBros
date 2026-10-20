@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, NoReturn, cast
+from typing import TYPE_CHECKING, Annotated, Any, NoReturn, cast
 
 import typer
 
 from antibros.config import CHUNKER_NAMES, AppConfig, ChunkerName, load_app_config
+
+if TYPE_CHECKING:
+    from antibros.evalset.schemas import AnyItem as AnyItemT
+    from antibros.evalset.schemas import SetName as SetNameLit
 from antibros.io import is_valid_run_tag, write_json
 from antibros.logging import configure_logging
 
@@ -172,58 +177,456 @@ def search(
         typer.echo(f"{i}. {h.score:.4f} {h.chunk_id}\n   {snippet}")
 
 
+class Stage(StrEnum):
+    draft = "draft"
+    final = "final"
+
+
+class DecisionOpt(StrEnum):
+    revise = "revise"
+    drop = "drop"
+
+
+VERIFIERS = Path("configs/models/evalset_verifiers.yaml")
+
+
+def _verifier_ids(models: Path) -> list[str]:
+    from antibros.config import load_model_profile
+    from antibros.evalset.verify_models import verifier_id
+
+    return [verifier_id(s) for s in load_model_profile(models).verifiers]
+
+
+def _evalset_items(cfg: AppConfig, stage: Stage) -> list[tuple[SetNameLit, AnyItemT]]:
+    from antibros.evalset.store import SET_NAMES, Layout, load_items_strict
+
+    layout = Layout(cfg.evalset.dir)
+    out: list[tuple[SetNameLit, AnyItemT]] = []
+    for name in SET_NAMES:
+        path = layout.draft(name) if stage is Stage.draft else layout.final(name)
+        out += [(name, it) for it in load_items_strict(path, name)]
+    return out
+
+
 @evalset_app.command("build")
-def evalset_build() -> None:
-    """Draft evalset items from the chunked corpus."""
-    _todo("evalset build", "M2")
+def evalset_build(
+    config: ConfigOpt = DEFAULT_CONFIG,
+    merge: Annotated[bool, typer.Option(help="Merge work/pool_grades.jsonl into drafts.")] = False,
+) -> None:
+    """Pool evidence candidates (BM25 + bge-m3 + e5) and retrieve the unanswerable top-k."""
+    from antibros.embedding.base import make_embedder
+    from antibros.evalset.build import BM25, merge_pool_grades, pool
+    from antibros.evalset.schemas import PoolGrade
+    from antibros.evalset.store import Layout, doc_texts, load_items_strict, rows, save_items
+    from antibros.indexing.pipeline import chunks_path, read_chunks
+    from antibros.indexing.qdrant_store import collection_name, make_client
+    from antibros.io import write_jsonl
+    from antibros.retrieval.base import DenseRetriever, make_retriever
+
+    cfg = _load(config)
+    es = cfg.evalset
+    layout = Layout(es.dir)
+    texts = doc_texts(cfg.ingestion.processed_dir)
+    chunks = read_chunks(chunks_path(cfg.ingestion.processed_dir, es.pool_chunker))
+    if merge:
+        grades = [PoolGrade.model_validate(r) for r in rows(layout.pool_grades)]
+        total = 0
+        for set_name in ("golden", "safety"):
+            path = layout.draft(set_name)
+            merged, added = merge_pool_grades(
+                load_items_strict(path, set_name), grades, chunks, texts
+            )
+            save_items(path, merged)
+            total += added
+        typer.echo(f"Merged {total} pooled evidence quotes into drafts")
+        return
+
+    items = _evalset_items(cfg, Stage.draft)
+    client = make_client(cfg.vector_store)
+    prefix = cfg.vector_store.collection_prefix
+
+    def dense_ranker(emb_name: str) -> Callable[[list[str], int], list[list[str]]]:
+        def rank(questions: list[str], k: int) -> list[list[str]]:
+            embedder = make_embedder(emb_name, cfg.embedders[emb_name])
+            try:
+                coll = collection_name(prefix, es.pool_chunker, emb_name)
+                r = DenseRetriever(client, coll, embedder)
+                return [[h.chunk_id for h in r.retrieve(q, k)] for q in questions]
+            finally:
+                embedder.close()
+
+        return rank
+
+    rankers = {"bm25": BM25(chunks).rank, **{e: dense_ranker(e) for e in es.pool_embedders}}
+    try:
+        pool_rows = pool(items, chunks, rankers, texts, es.pool_k, cfg.eval.span_min_coverage)
+        write_jsonl(layout.pool, pool_rows)
+        # Unanswerable items: the pipeline's own retrieval config, top-k passages for verifiers.
+        r = cfg.retrieval
+        embedder = make_embedder(r.embedder, cfg.embedders[r.embedder])
+        try:
+            retriever = make_retriever(
+                r, client, collection_name(prefix, r.chunker, r.embedder), embedder
+            )
+            top = []
+            for name, it in items:
+                if getattr(it, "category", None) == "unanswerable":
+                    hits = retriever.retrieve(it.question, es.unanswerable_top_k)
+                    top += [
+                        {
+                            "set": name,
+                            "item_id": it.id,
+                            "rank": i,
+                            "chunk_id": h.chunk_id,
+                            "text": h.payload["text"],
+                        }
+                        for i, h in enumerate(hits, start=1)
+                    ]
+            write_jsonl(layout.unanswerable_top, top)
+        finally:
+            embedder.close()
+    finally:
+        client.close()
+    todo = sum(1 for row in pool_rows if row["covered_grade"] == 0)
+    typer.echo(f"Wrote {len(pool_rows)} pooled chunks ({todo} to grade) to {layout.pool}")
 
 
 @evalset_app.command("check")
-def evalset_check() -> None:
-    """Deterministic checks: quotes exist, schema, duplicates, lexical overlap, splits."""
-    _todo("evalset check", "M2")
+def evalset_check(
+    config: ConfigOpt = DEFAULT_CONFIG,
+    stage: Annotated[Stage, typer.Option(help="Check drafts or frozen files.")] = Stage.draft,
+    embed: Annotated[bool, typer.Option(help="Embedding near-duplicate check (GPU).")] = True,
+    require_verified: Annotated[bool, typer.Option(help="Require verifier verdicts.")] = False,
+    models: ModelsOpt = VERIFIERS,
+) -> None:
+    """Deterministic checks: quotes exist, schema, duplicates, lexical overlap, counts, splits."""
+    from antibros.embedding.base import make_embedder
+    from antibros.evalset.checks import run_checks
+    from antibros.evalset.review import ReviewLog
+    from antibros.evalset.store import Layout, doc_texts, manifest_ids
+
+    cfg = _load(config)
+    es = cfg.evalset
+    layout = Layout(es.dir)
+    embed_fn = None
+    if embed:
+        embedder = make_embedder(es.dedup_embedder, cfg.embedders[es.dedup_embedder])
+
+        def embed_fn(texts: list[str]) -> list[list[float]]:
+            try:
+                return embedder.embed_queries(texts).dense
+            finally:
+                embedder.close()
+
+    report = run_checks(
+        layout,
+        es,
+        doc_texts(cfg.ingestion.processed_dir),
+        manifest_ids(layout.manifest),
+        stage="final" if stage is Stage.final else "draft",
+        embed=embed_fn,
+        review=ReviewLog(layout.review_log),
+        verifiers=_verifier_ids(models),
+        require_verified=require_verified,
+    )
+    typer.echo(f"Checked {report.n_items} items; counts: {report.counts}")
+    typer.echo(f"Lexical overlap (question vs evidence): {report.overlap}")
+    for issue in report.issues:
+        typer.echo(f"FAIL [{issue.check}] {issue.set}:{issue.item_id or '-'} {issue.message}")
+    if not report.ok:
+        typer.echo(f"{len(report.issues)} issue(s)", err=True)
+        raise typer.Exit(code=1)
+    typer.echo("All checks passed")
 
 
 @evalset_app.command("verify-models")
 def evalset_verify_models(
-    models: ModelsOpt = Path("configs/models/evalset_verifiers.yaml"),
+    config: ConfigOpt = DEFAULT_CONFIG,
+    models: ModelsOpt = VERIFIERS,
+    limit: Annotated[int | None, typer.Option(help="At most N items per verifier.")] = None,
+    kind: Annotated[
+        list[str] | None,
+        typer.Option(help="Only these item kinds: supported, unanswerable, red_flag, synth."),
+    ] = None,
 ) -> None:
-    """Have two cross-family verifier models grade every item."""
-    _todo("evalset verify-models", "M2")
+    """Have two cross-family verifier models grade every item (resumable)."""
+    from antibros.config import Settings, load_model_profile
+    from antibros.evalset.review import ReviewLog
+    from antibros.evalset.store import Layout, rows
+    from antibros.evalset.verify_models import PROMPTS, verify
+    from antibros.llm import build_client
+    from antibros.prompts import load_prompt
+
+    cfg = _load(config)
+    layout = Layout(cfg.evalset.dir)
+    profile = load_model_profile(models)
+    if len({s.family for s in profile.verifiers}) < 2:
+        typer.echo("evalset verifiers must come from two different model families", err=True)
+        raise typer.Exit(code=1)
+    top: dict[str, list[str]] = {}
+    for row in sorted(rows(layout.unanswerable_top), key=lambda r: (r["item_id"], r["rank"])):
+        top.setdefault(row["item_id"], []).append(row["text"])
+    review = ReviewLog(layout.review_log)
+    settings = Settings()
+    stats = verify(
+        _evalset_items(cfg, Stage.draft),
+        review,
+        profile.verifiers,
+        lambda spec: build_client(
+            spec, settings, cfg.llm_cache.dir if cfg.llm_cache.enabled else None
+        ),
+        {k: load_prompt(cfg.prompts_dir, v) for k, v in PROMPTS.items()},
+        top,
+        cfg.evalset,
+        limit=limit,
+        kinds=set(kind) if kind else None,
+    )
+    typer.echo(
+        f"Judged {stats.judged} (accepted {stats.accepted}); auto-kept {stats.auto_kept}; "
+        f"invalid outputs {len(stats.failed)}; over max rounds {len(stats.skipped_max_rounds)}"
+    )
+    if stats.failed:
+        raise typer.Exit(code=1)
+
+
+@evalset_app.command("decide")
+def evalset_decide(
+    item_id: Annotated[str, typer.Option("--id", help="Item ID.")],
+    decision: Annotated[DecisionOpt, typer.Option(help="revise (before editing) or drop.")],
+    note: Annotated[str, typer.Option(help="Why.")],
+    config: ConfigOpt = DEFAULT_CONFIG,
+) -> None:
+    """Log Claude Code's decision for an item the verifiers disagreed on."""
+    from antibros.evalset.review import ReviewLog
+    from antibros.evalset.store import Layout
+
+    cfg = _load(config)
+    for name, it in _evalset_items(cfg, Stage.draft):
+        if it.id == item_id:
+            ReviewLog(Layout(cfg.evalset.dir).review_log).add_decision(
+                name, it, decision.value, by="claude-code", note=note
+            )
+            typer.echo(f"Logged {decision.value} for {name}:{item_id}")
+            return
+    typer.echo(f"No item {item_id!r}", err=True)
+    raise typer.Exit(code=1)
 
 
 @evalset_app.command("freeze")
-def evalset_freeze() -> None:
-    """Write CHECKSUMS.sha256 and VERSION."""
-    _todo("evalset freeze", "M2")
+def evalset_freeze(config: ConfigOpt = DEFAULT_CONFIG, models: ModelsOpt = VERIFIERS) -> None:
+    """Split kept items (stratified, seeded), write final files, VERSION and CHECKSUMS.sha256."""
+    from antibros.evalset.checks import run_checks, target_dev
+    from antibros.evalset.freeze import assign_splits, write_checksums, write_version
+    from antibros.evalset.review import ReviewLog
+    from antibros.evalset.store import SET_NAMES, Layout, doc_texts, manifest_ids, save_items
+
+    cfg = _load(config)
+    es = cfg.evalset
+    layout = Layout(es.dir)
+    if layout.checksums.exists():
+        typer.echo(f"{layout.root} is already frozen; changes require a new version.", err=True)
+        raise typer.Exit(code=1)
+    review = ReviewLog(layout.review_log)
+    ids = _verifier_ids(models)
+    texts, mids = doc_texts(cfg.ingestion.processed_dir), manifest_ids(layout.manifest)
+    pre = run_checks(layout, es, texts, mids, review=review, verifiers=ids, require_verified=True)
+    if not pre.ok:
+        for issue in pre.issues:
+            typer.echo(f"FAIL [{issue.check}] {issue.set}:{issue.item_id or '-'} {issue.message}")
+        raise typer.Exit(code=1)
+    counts: dict[str, int] = {}
+    by_set: dict[SetNameLit, list[AnyItemT]] = {n: [] for n in SET_NAMES}
+    for name, it in _evalset_items(cfg, Stage.draft):
+        if review.status(name, it, ids) == "kept":
+            by_set[name].append(it)
+    for name in SET_NAMES:
+        dev_total, total = target_dev(es, name)
+        kept = [
+            it.model_copy(
+                update={"provenance": it.provenance.model_copy(update={"verified_by": ids})}
+            )
+            for it in by_set[name]
+        ]
+        save_items(layout.final(name), assign_splits(name, kept, dev_total, total, es.split_seed))
+        counts[name] = len(kept)
+    post = run_checks(
+        layout, es, texts, mids, stage="final", review=review, verifiers=ids, require_verified=True
+    )
+    if not post.ok:
+        for issue in post.issues:
+            typer.echo(f"FAIL [{issue.check}] {issue.set}:{issue.item_id or '-'} {issue.message}")
+        raise typer.Exit(code=1)
+    write_version(layout.root, es.version, layout.manifest, counts)
+    digest = write_checksums(layout.root)
+    typer.echo(f"Frozen {layout.root}: {counts}; evalset sha256 {digest}")
 
 
 @evalset_app.command("verify")
-def evalset_verify() -> None:
-    """Verify frozen evalset checksums."""
-    _todo("evalset verify", "M2")
+def evalset_verify(config: ConfigOpt = DEFAULT_CONFIG) -> None:
+    """Verify frozen evalset checksums (byte-exact, so CRLF conversion fails)."""
+    from antibros.evalset.freeze import verify_checksums
+
+    cfg = load_app_config(config)
+    result = verify_checksums(cfg.evalset.dir)
+    for p in result.problems:
+        typer.echo(f"FAIL {p}", err=True)
+    if not result.ok:
+        raise typer.Exit(code=1)
+    typer.echo(f"OK {cfg.evalset.dir} sha256 {result.evalset_sha256}")
 
 
 @evalset_app.command("leakcheck")
-def evalset_leakcheck() -> None:
+def evalset_leakcheck(config: ConfigOpt = DEFAULT_CONFIG) -> None:
     """Fail if src/, configs/ or prompts/ share >=8-word n-grams with the evalset."""
-    _todo("evalset leakcheck", "M2")
+    from antibros.evalset.leakcheck import leakcheck
+    from antibros.evalset.store import Layout
+
+    cfg = load_app_config(config)
+    es = cfg.evalset
+    stage = Stage.final if Layout(es.dir).checksums.exists() else Stage.draft
+    items = [it for _, it in _evalset_items(cfg, stage)]
+    leaks = leakcheck(items, es.leakcheck_paths, es.leakcheck_ngram)
+    for leak in leaks:
+        typer.echo(f"LEAK {leak.path}:{leak.line} [{leak.item_id}] {leak.ngram!r}", err=True)
+    if leaks:
+        raise typer.Exit(code=1)
+    typer.echo(
+        f"No leaks: {len(items)} {stage.value} items vs {[str(p) for p in es.leakcheck_paths]}"
+    )
+
+
+def _frozen_items(cfg: AppConfig, name: SetNameLit) -> list[AnyItemT]:
+    from antibros.evalset.store import Layout, load_items_strict
+
+    layout = Layout(cfg.evalset.dir)
+    if not layout.final(name).exists():
+        typer.echo(f"{layout.final(name)} not found: freeze the evalset first.", err=True)
+        raise typer.Exit(code=1)
+    return load_items_strict(layout.final(name), name)
+
+
+def _start_run(
+    cfg: AppConfig, tag: str, meta: Mapping[str, Any], snapshot: Mapping[str, Any]
+) -> Path:
+    from antibros.eval.runs import new_run_dir, write_config_snapshot
+
+    run_dir = new_run_dir(cfg.eval.runs_dir, tag)
+    write_config_snapshot(run_dir, snapshot)
+    write_json(run_dir / "run.json", meta)
+    return run_dir
 
 
 @eval_app.command("retrieval")
 def eval_retrieval(
     config: ConfigOpt,
     set_: Annotated[SetName, typer.Option("--set")] = SetName.golden,
+    tag: Annotated[str | None, typer.Option(help="Run tag (default: retrieval_<set>).")] = None,
 ) -> None:
-    """Retrieval metrics (no LLM)."""
-    _todo("eval retrieval", "M2")
+    """Retrieval metrics on the dev split, no LLM: Evidence Recall@k, MRR, nDCG, Doc Recall."""
+    from antibros.embedding.base import make_embedder
+    from antibros.eval.fingerprint import build_fingerprint
+    from antibros.eval.retrieval_eval import chunk_ref, queries_for, run_retrieval_eval
+    from antibros.eval.runs import timed_phase
+    from antibros.evalset.store import doc_texts
+    from antibros.indexing.pipeline import chunks_path, read_chunks
+    from antibros.indexing.qdrant_store import collection_name, make_client
+    from antibros.io import write_jsonl
+    from antibros.retrieval.base import make_retriever
+
+    cfg = _load(config)
+    name: SetNameLit = "golden" if set_ is SetName.golden else "synth"
+    queries = queries_for(_frozen_items(cfg, name), "dev")
+    r = cfg.retrieval
+    snapshot = {"app": cfg.model_dump(mode="json"), "config_path": str(config)}
+    meta = {"kind": "retrieval", "eval_set": name, "split": "dev"}
+    run_dir = _start_run(cfg, tag or f"retrieval_{name}", meta, snapshot)
+    fp = build_fingerprint(
+        evalset_dir=cfg.evalset.dir,
+        eval_set=name,
+        split="dev",
+        metric_set="retrieval-v1",
+        bootstrap_seed=cfg.eval.bootstrap_seed,
+        config=snapshot,
+        pipeline={"model": f"{r.mode}:{r.chunker}:{r.embedder}"},
+    )
+    write_json(run_dir / "fingerprint.json", fp)
+    all_chunks = [
+        chunk_ref(c.model_dump())
+        for c in read_chunks(chunks_path(cfg.ingestion.processed_dir, r.chunker))
+    ]
+    texts = doc_texts(cfg.ingestion.processed_dir)
+    client = make_client(cfg.vector_store)
+    embedder = make_embedder(r.embedder, cfg.embedders[r.embedder])
+    try:
+        retriever = make_retriever(
+            r,
+            client,
+            collection_name(cfg.vector_store.collection_prefix, r.chunker, r.embedder),
+            embedder,
+        )
+        with timed_phase(run_dir, "retrieval", "retrieval", cfg.eval.budgets_s, len(queries)):
+            rows, metrics = run_retrieval_eval(
+                queries,
+                lambda q, k: [chunk_ref(h.payload) for h in retriever.retrieve(q, k)],
+                all_chunks,
+                texts,
+                cfg.eval,
+                r.top_k,
+            )
+    finally:
+        embedder.close()
+        client.close()
+    write_jsonl(run_dir / "per_item.jsonl", rows)
+    write_json(run_dir / "metrics.json", metrics)
+    ov = metrics["overall"]
+    typer.echo(f"{run_dir}: {len(queries)} queries")
+    for m, v in ov.items():
+        typer.echo(f"  {m:22s} {v['value']:.3f}  [{v['low']:.3f}, {v['high']:.3f}]")
 
 
 @eval_app.command("safety")
-def eval_safety(config: ConfigOpt, split: Split = Split.dev) -> None:
-    """Safety guard metrics."""
+def eval_safety(
+    config: ConfigOpt,
+    split: Split = Split.dev,
+    tag: Annotated[str | None, typer.Option(help="Run tag (default: safety_<mode>).")] = None,
+) -> None:
+    """Run only the input guard over the safety set: red-flag recall and FPR."""
+    from antibros.eval.fingerprint import build_fingerprint
+    from antibros.eval.runs import timed_phase
+    from antibros.eval.safety import aggregate, make_guard, per_item_rows, run_safety
+    from antibros.evalset.schemas import SafetyItem
+    from antibros.io import write_jsonl
+
     _dev_only(split)
-    _todo("eval safety", "M4")
+    cfg = _load(config)
+    items = [it for it in _frozen_items(cfg, "safety") if it.split == split.value]
+    guard = make_guard(cfg)
+    snapshot = {"app": cfg.model_dump(mode="json"), "config_path": str(config)}
+    run_dir = _start_run(
+        cfg,
+        tag or f"safety_{cfg.guard.mode}",
+        {"kind": "safety", "eval_set": "safety", "split": split.value},
+        snapshot,
+    )
+    write_json(
+        run_dir / "fingerprint.json",
+        build_fingerprint(
+            evalset_dir=cfg.evalset.dir,
+            eval_set="safety",
+            split=split.value,
+            metric_set="safety-v1",
+            bootstrap_seed=cfg.eval.bootstrap_seed,
+            config=snapshot,
+            pipeline={"model": cfg.guard.mode},
+        ),
+    )
+    with timed_phase(run_dir, "safety", f"safety_{split.value}", cfg.eval.budgets_s, len(items)):
+        records = run_safety(cast(list[SafetyItem], items), guard)
+    rows = per_item_rows(records)
+    write_jsonl(run_dir / "per_item.jsonl", rows)
+    metrics = aggregate(rows, cfg.eval)
+    write_json(run_dir / "metrics.json", metrics)
+    typer.echo(f"{run_dir}: recall {metrics['red_flag_recall']}, fpr {metrics['fpr']}")
 
 
 @eval_app.command("predict")
@@ -233,25 +636,122 @@ def eval_predict(
     tag: Annotated[str, typer.Option(help="Run tag, [A-Za-z0-9_-] only.")],
     split: Split = Split.dev,
     limit: Annotated[int | None, typer.Option(help="Only the first N questions.")] = None,
+    run: Annotated[Path | None, typer.Option(help="Resume this run directory.")] = None,
 ) -> None:
-    """Phase 1: run the pipeline LLM and store predictions."""
+    """Phase 1: run the pipeline on the golden split and store predictions (resumable)."""
+    from antibros.config import load_model_profile
+    from antibros.eval.fingerprint import build_fingerprint
+    from antibros.eval.predict import make_pipeline, run_predict
+    from antibros.eval.runs import timed_phase
+    from antibros.evalset.schemas import GoldenItem
+    from antibros.io import read_json
+
     _dev_only(split)
     if not is_valid_run_tag(tag):
         typer.echo(f"Invalid tag {tag!r}: use only [A-Za-z0-9_-].", err=True)
         raise typer.Exit(code=1)
-    _todo("eval predict", "M2")
+    cfg = _load(config)
+    profile = load_model_profile(models)
+    items = [cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == split.value]
+    pipeline = make_pipeline(cfg, profile)
+    if run is not None:
+        meta = read_json(run / "run.json")
+        if meta.get("split") != split.value or meta.get("kind") != "e2e":
+            typer.echo(f"{run} is not an e2e run on split {split.value}", err=True)
+            raise typer.Exit(code=1)
+        run_dir = run
+    else:
+        snapshot = {
+            "app": cfg.model_dump(mode="json"),
+            "models": profile.model_dump(mode="json"),
+            "config_path": str(config),
+        }
+        run_dir = _start_run(
+            cfg, tag, {"kind": "e2e", "eval_set": "golden", "split": split.value}, snapshot
+        )
+        p, j = profile.pipeline, profile.judge
+        write_json(
+            run_dir / "fingerprint.json",
+            build_fingerprint(
+                evalset_dir=cfg.evalset.dir,
+                eval_set="golden",
+                split=split.value,
+                metric_set="e2e-v1",
+                bootstrap_seed=cfg.eval.bootstrap_seed,
+                config=snapshot,
+                judge=j.model_dump() if j else None,
+                pipeline=p.model_dump() if p else None,
+            ),
+        )
+    with timed_phase(run_dir, "predict", f"e2e_{split.value}", cfg.eval.budgets_s, len(items)):
+        stats = run_predict(items, pipeline, run_dir, limit)
+    typer.echo(
+        f"{run_dir}: predicted {stats.predicted} "
+        f"(resumed after {stats.done_before}), errors {stats.errors}"
+    )
 
 
 @eval_app.command("judge")
 def eval_judge(run: RunArg, models: ModelsOpt) -> None:
-    """Phase 2: score stored predictions with the judge LLM."""
-    _todo("eval judge", "M2")
+    """Phase 2: score stored predictions with the judge (resumable), then write the report."""
+    import yaml
+
+    from antibros.config import AppConfig, load_model_profile
+    from antibros.eval.judge import make_judge, run_judge
+    from antibros.eval.predict import load_predictions
+    from antibros.eval.runs import timed_phase
+    from antibros.evalset.schemas import GoldenItem
+    from antibros.io import read_json
+
+    meta = read_json(run / "run.json")
+    cfg = AppConfig.model_validate(
+        yaml.safe_load((run / "config.yaml").read_text(encoding="utf-8"))["app"]
+    )
+    configure_logging(cfg.log_level)
+    profile = load_model_profile(models)
+    fp = read_json(run / "fingerprint.json")
+    if profile.judge and fp.get("judge_model") not in (None, profile.judge.model):
+        typer.echo(
+            f"Judge {profile.judge.model} differs from the run's {fp['judge_model']}", err=True
+        )
+        raise typer.Exit(code=1)
+    items = [
+        cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == meta["split"]
+    ]
+    preds = load_predictions(run)
+    judge = make_judge(cfg, profile)
+    with timed_phase(run, "judge", f"e2e_{meta['split']}", cfg.eval.budgets_s, len(preds)):
+        stats = run_judge(items, preds, judge, run)
+    typer.echo(
+        f"{run}: judged {stats.judged} (resumed after {stats.done_before}), errors {stats.errors}"
+    )
+    eval_report(run)
 
 
 @eval_app.command("report")
 def eval_report(run: RunArg) -> None:
-    """Render metrics with bootstrap confidence intervals."""
-    _todo("eval report", "M2")
+    """Compute every e2e metric with bootstrap CIs into per_item.jsonl and metrics.json."""
+    import yaml
+
+    from antibros.config import AppConfig
+    from antibros.eval.judge import load_judgments
+    from antibros.eval.predict import load_predictions
+    from antibros.eval.report import aggregate, per_item_rows
+    from antibros.evalset.schemas import GoldenItem
+    from antibros.io import read_json, write_jsonl
+
+    meta = read_json(run / "run.json")
+    cfg = AppConfig.model_validate(
+        yaml.safe_load((run / "config.yaml").read_text(encoding="utf-8"))["app"]
+    )
+    items = [
+        cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == meta["split"]
+    ]
+    rows = per_item_rows(items, load_predictions(run), load_judgments(run))
+    write_jsonl(run / "per_item.jsonl", rows)
+    metrics = aggregate(rows, cfg.eval)
+    write_json(run / "metrics.json", metrics)
+    typer.echo(f"{run}: {metrics['n_items']} items, status {metrics['status_counts']}")
 
 
 @eval_app.command("final")
@@ -265,9 +765,26 @@ def eval_final(
 
 
 @app.command()
-def compare(run_a: Path, run_b: Path) -> None:
-    """Paired comparison of two runs (refuses on hard fingerprint mismatch)."""
-    _todo("compare", "M2")
+def compare(
+    run_a: Path,
+    run_b: Path,
+    config: ConfigOpt = DEFAULT_CONFIG,
+    out: Annotated[Path | None, typer.Option(help="Also write the table to this file.")] = None,
+) -> None:
+    """Paired bootstrap comparison of two runs (refuses on hard fingerprint mismatch)."""
+    from antibros.eval.compare import FingerprintMismatch, compare_runs, render_markdown
+    from antibros.io import write_text
+
+    cfg = load_app_config(config)
+    try:
+        cmp = compare_runs(run_a, run_b, cfg.eval)
+    except FingerprintMismatch as e:
+        typer.echo(f"Refusing to compare: {e}. These runs are not comparable.", err=True)
+        raise typer.Exit(code=1) from e
+    md = render_markdown(cmp, run_a.name, run_b.name)
+    if out is not None:
+        write_text(out, md)
+    typer.echo(md)
 
 
 @app.command()

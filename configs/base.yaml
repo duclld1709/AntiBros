@@ -52,4 +52,59 @@ retrieval:
   top_k: 20
   candidate_k: 50
   rrf_k: 60
+evalset:
+  dir: evalsets/v1
+  version: v1
+  # Counts per category/language (spec §6.1).
+  golden_targets:
+    answerable/en: 12
+    answerable/vi: 12
+    myth/vi: 8
+    myth/en: 4
+    unanswerable/vi: 6
+    unanswerable/en: 6
+  safety_targets:
+    red_flag/vi: 10
+    red_flag/en: 10
+    near_red_flag/vi: 10
+    near_red_flag/en: 10
+  synth_per_doc: 8
+  golden_dev: 16          # of 48; the rest is test
+  safety_dev: 16          # of 40
+  split_seed: 42
+  max_lexical_overlap: 0.6  # share of question content words found in its evidence
+  near_dup_jaccard: 0.8
+  near_dup_cosine: 0.92
+  dedup_embedder: bge_m3
+  unanswerable_top_k: 20
+  pool_k: 10
+  pool_chunker: section_aware
+  pool_embedders: [bge_m3, e5_large]
+  verify_passages_per_call: 5
+  verify_max_revisions: 2
+  verify_max_tokens: 512
+  leakcheck_ngram: 8
+  leakcheck_paths: [src, configs, prompts]
+eval:
+  runs_dir: experiments
+  span_min_coverage: 0.5
+  recall_ks: [5, 10]
+  ndcg_k: 10
+  doc_recall_k: 3
+  bootstrap_n: 1000
+  bootstrap_seed: 42
+  ci_level: 0.95
+  budgets_s:              # spec §6.8
+    retrieval: 120
+    safety_dev: 300
+    safety_test: 300
+    e2e_dev: 600          # predict + judge
+    e2e_test: 1200
+pipeline:
+  kind: rag               # implemented in M3
+judge:
+  kind: llm               # implemented in M3
+  max_tokens: 512
+guard:
+  mode: rule_llm          # implemented in M4
 reports_dir: reports

@@ -7,6 +7,7 @@ exposes what we need to control and measure: ``think: false``, ``options.num_ctx
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import httpx
@@ -33,9 +34,12 @@ class OllamaClient(LLMClient):
         timeout_s: float = 300.0,
         cache: LLMCache | None = None,
         transport: httpx.BaseTransport | None = None,
+        max_retries: int = 4,
+        backoff_s: float = 3.0,
     ):
         super().__init__(model=model, digest=digest, cache=cache)
         self.keep_alive = keep_alive
+        self.max_retries, self.backoff_s = max_retries, backoff_s
         self._http = httpx.Client(
             base_url=native_base_url(base_url), timeout=timeout_s, transport=transport
         )
@@ -62,11 +66,25 @@ class OllamaClient(LLMClient):
             payload["format"] = json_schema
         return payload
 
+    def _post_chat(self, payload: dict[str, Any]) -> httpx.Response:
+        """POST with a short retry on 5xx / connection errors: Ollama can fail a model load
+        transiently (e.g. a CUDA init error) and succeed on the next attempt."""
+        for attempt in range(self.max_retries + 1):
+            try:
+                resp = self._http.post("/api/chat", json=payload)
+                if resp.status_code < 500 or attempt == self.max_retries:
+                    resp.raise_for_status()
+                    return resp
+            except httpx.TransportError:
+                if attempt == self.max_retries:
+                    raise
+            time.sleep(self.backoff_s * (2**attempt))
+        raise AssertionError("unreachable")
+
     def _complete(
         self, messages: list[Message], json_schema: dict[str, Any] | None, params: LLMParams
     ) -> tuple[str, Usage]:
-        resp = self._http.post("/api/chat", json=self.build_payload(messages, json_schema, params))
-        resp.raise_for_status()
+        resp = self._post_chat(self.build_payload(messages, json_schema, params))
         data = resp.json()
         usage = Usage(
             prompt_tokens=data.get("prompt_eval_count", 0),
