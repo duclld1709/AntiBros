@@ -962,13 +962,18 @@ def serve(
     port: int = 8000,
     config: ConfigOpt = Path("configs/baseline.yaml"),
     models: ModelsOpt = Path("configs/models/laptop.yaml"),
+    ui_dir: Annotated[
+        Path, typer.Option(help="Built frontend to serve at / (skipped if not built).")
+    ] = Path("frontend/dist"),
 ) -> None:
-    """Start the FastAPI application."""
+    """Start the FastAPI application (and the built web UI, if present)."""
     import uvicorn
 
     from antibros.api import create_app
 
-    uvicorn.run(create_app(config, models), host=host, port=port)
+    if not (ui_dir / "index.html").is_file():
+        typer.echo(f"No built UI in {ui_dir}: API only (build it with `uv run poe ui-build`).")
+    uvicorn.run(create_app(config, models, ui_dir=ui_dir), host=host, port=port)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,197 @@
+app:
+  chunking:
+    chunk_size: 512
+    fixed_overlap: 64
+    prepend_context: true
+    tokenizer: BAAI/bge-m3
+  embedders:
+    bge_m3:
+      batch_size: 16
+      device: auto
+      dim: 64
+      fp16: true
+      kind: bge_m3
+      max_length: 1024
+      model: BAAI/bge-m3
+      query_max_length: 512
+    e5_large:
+      batch_size: 16
+      device: auto
+      dim: 64
+      fp16: true
+      kind: e5
+      max_length: 512
+      model: intfloat/multilingual-e5-large
+      query_max_length: 512
+  eval:
+    bootstrap_n: 1000
+    bootstrap_seed: 42
+    budgets_s:
+      e2e_dev: 600.0
+      e2e_test: 1200.0
+      retrieval: 120.0
+      safety_dev: 300.0
+      safety_test: 300.0
+    ci_level: 0.95
+    doc_recall_k: 3
+    ndcg_k: 10
+    recall_ks:
+    - 5
+    - 10
+    runs_dir: experiments
+    span_min_coverage: 0.5
+  evalset:
+    dedup_embedder: bge_m3
+    dir: evalsets\v1
+    golden_dev: 16
+    golden_targets:
+      answerable/en: 12
+      answerable/vi: 12
+      myth/en: 4
+      myth/vi: 8
+      unanswerable/en: 6
+      unanswerable/vi: 6
+    leakcheck_ngram: 8
+    leakcheck_paths:
+    - src
+    - configs
+    - prompts
+    max_lexical_overlap: 0.6
+    near_dup_cosine: 0.92
+    near_dup_jaccard: 0.8
+    pool_chunker: section_aware
+    pool_embedders:
+    - bge_m3
+    - e5_large
+    pool_k: 10
+    safety_dev: 16
+    safety_targets:
+      near_red_flag/en: 10
+      near_red_flag/vi: 10
+      red_flag/en: 10
+      red_flag/vi: 10
+    split_seed: 42
+    synth_per_doc: 8
+    unanswerable_top_k: 20
+    verify_max_revisions: 2
+    verify_max_tokens: 512
+    verify_passages_per_call: 5
+    version: v1
+  guard:
+    input_enabled: true
+    llm_max_tokens: 128
+    mode: llm
+    output_enabled: true
+    rules_path: configs\guard\rules.yaml
+  index:
+    chunkers:
+    - fixed
+    - recursive
+    - section_aware
+    embedders:
+    - bge_m3
+    - e5_large
+    upsert_batch: 64
+  ingestion:
+    candidates: configs\corpus\candidates.yaml
+    europepmc:
+      backoff_s: 1.0
+      base_url: https://www.ebi.ac.uk/europepmc/webservices/rest
+      max_retries: 4
+      min_interval_s: 0.2
+      timeout_s: 30.0
+    manifest: evalsets\v1\corpus_manifest.jsonl
+    processed_dir: data\processed
+    raw_dir: data\raw
+  judge:
+    kind: llm
+    max_tokens: 512
+  llm_cache:
+    dir: .llm_cache
+    enabled: true
+  log_level: INFO
+  name: guard_llm
+  pipeline:
+    context_k: 5
+    generate_max_tokens: 512
+    grade:
+      enabled: true
+      max_retries: 1
+      max_tokens: 128
+      min_rerank_score: 0.1
+      use_llm: true
+    kind: rag
+    query_rewrite:
+      enabled: true
+      max_tokens: 256
+      max_variants: 2
+    translate_max_tokens: 128
+    verify:
+      enabled: true
+      max_removed_ratio: 0.5
+      max_tokens: 512
+  prompts_dir: prompts
+  reports_dir: reports
+  rerank:
+    batch_size: 8
+    device: cuda
+    enabled: true
+    fp16: true
+    kind: bge_reranker
+    max_length: 512
+    model: BAAI/bge-reranker-v2-m3
+  retrieval:
+    candidate_k: 50
+    chunker: section_aware
+    embedder: e5_large
+    mode: dense
+    rrf_k: 60
+    top_k: 20
+  tracing:
+    backend: jsonl
+    path: experiments\traces.jsonl
+  tuning:
+    grade_min_rerank_score:
+    - 0.02
+    - 0.05
+    - 0.1
+    - 0.2
+    - 0.3
+    verify_max_removed_ratio:
+    - 0.25
+    - 0.5
+    - 0.75
+  vector_store:
+    collection_prefix: antibros
+    mode: local
+    path: data\qdrant
+    timeout_s: 60
+config_path: configs/ablations/guard_llm.yaml
+models:
+  description: Pipeline qwen3.5:4b (Q4_K_M) + cross-family judge gemma4:e4b (Q4_K_M).
+  judge:
+    digest: dc35e8d9c6061baa6f0fa870975ab6932e2542b579b13ea0f199fa4bb7300c9c
+    family: gemma4
+    input_price_per_million: null
+    keep_alive: 10m
+    model: gemma4:e4b
+    num_ctx: 8192
+    output_price_per_million: null
+    provider: ollama
+    quantization: Q4_K_M
+    temperature: 0.0
+    think: false
+  name: laptop
+  pipeline:
+    digest: d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04
+    family: qwen35
+    input_price_per_million: null
+    keep_alive: 10m
+    model: qwen3.5:4b
+    num_ctx: 8192
+    output_price_per_million: null
+    provider: ollama
+    quantization: Q4_K_M
+    temperature: 0.0
+    think: false
+  verifiers: []

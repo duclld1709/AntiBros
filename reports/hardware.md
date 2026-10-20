@@ -87,3 +87,8 @@ Cache replay run [`experiments/20261020-1646_m3_cache_replay_verified/`](../expe
 During the cache replay, sampled `nvidia-smi` memory peaked at 5,215 MiB used (one-second sampling, n=1; includes display and other GPU allocations). The existing isolated model probe measured 4,016 MiB for qwen3.5:4b at 8k context and 1,346 MiB for BGE-M3; do not sum them because they are loaded in separate phases. The 32-question test split is projected at about 8.8 minutes by linear extrapolation of the full predict+judge baseline (actual dev run: 4.4 minutes). Full 48-question evaluation is projected at about 13.2 minutes. Projections are estimates; workload composition and warm cache can change runtime.
 
 API/UI smoke: `GET /health` returned 200; `POST /ask` returned an answered response with three citations for a golden dev query; its trace was appended to `experiments/traces.jsonl`. Streamlit served HTTP 200 on localhost. The UI/API smoke was manual on the laptop.
+
+
+## M4 tune OOM note (2026-10-20)
+
+The `grade_min_rerank_score` tuning run using the GPU reranker was interrupted after a VRAM OOM that crashed VS Code. Its partial run is preserved at `experiments/20261020-2100_tune_grade_min_rerank_score_0p02/` and has no metrics or timing, so it is not a completed evaluation. Following the runbook, `configs/base.yaml` and `configs/full.yaml` set `rerank.device: cpu` to free GPU memory before resuming the tuning grid. The resolved config for the first resume attempt still selected CUDA, so that attempt was stopped before the tuning grid completed; the full config now pins CPU explicitly.

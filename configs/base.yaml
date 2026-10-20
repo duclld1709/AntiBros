@@ -84,7 +84,7 @@ evalset:
   verify_max_revisions: 2
   verify_max_tokens: 512
   leakcheck_ngram: 8
-  leakcheck_paths: [src, configs, prompts]
+  leakcheck_paths: [src, configs, prompts, frontend/src]
 eval:
   runs_dir: experiments
   span_min_coverage: 0.5
@@ -105,7 +105,7 @@ rerank:
   enabled: false
   kind: bge_reranker      # bge_reranker | fake (CI)
   model: BAAI/bge-reranker-v2-m3
-  device: cuda            # reports/hardware.md: fits next to the LLM; first thing to move to cpu on OOM
+  device: cpu             # M4 tune OOM mitigation; see reports/hardware.md
   fp16: true
   batch_size: 8
   max_length: 512

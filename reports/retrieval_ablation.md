@@ -1,39 +1,62 @@
-# Retrieval ablation (M4, dev only)
+# M4 retrieval ablation (dev)
 
-> **Status: TBD.** No retrieval ablation has been run yet. Every number in this report must
-> come from a directory in `experiments/` (run order: `docs/runbooks/m4_dev_runs.md` §1).
+Run date: 2026-10-20. All retrieval runs completed on RTX 3050 Laptop GPU (6 GB); all six chunker/embedder collections were indexed. The full suite tested 7 configs on golden (12 items) and synth (94 items). Golden summary by language and overall is included below.
 
-Setup: one factor at a time from the reference `configs/ablations/retrieval_hybrid.yaml`
-(section_aware chunks, bge-m3, hybrid RRF, no reranker), on golden dev (questions with
-evidence) and retrieval-synth (96 queries). Metrics are span-based (ADR-0015) with 95%
-bootstrap CIs (1,000 resamples, seed 42); differences use paired bootstrap, and a CI that
-contains 0 is reported as not significant. Dev is small, so conclusions are indicative.
+## Paired golden comparisons (95% bootstrap CI)
 
-| Axis | Values | Configs |
-|---|---|---|
-| Chunking | fixed · recursive · section_aware | `retrieval_fixed`, `retrieval_recursive`, `retrieval_hybrid` |
-| Retrieval | sparse · dense · hybrid | `retrieval_sparse`, `retrieval_dense`, `retrieval_hybrid` |
-| Embedding (dense) | bge-m3 · multilingual-e5-large | `retrieval_dense`, `retrieval_dense_e5` |
-| Reranker | off · on | `retrieval_hybrid`, `retrieval_rerank` |
+Each comparison has 12 common items. A is the reference, B is the variant; differences are B ? A.
 
-## Results
+| Axis / comparison | Evidence Recall@10 | MRR | nDCG@10 | Decision |
+|---|---:|---:|---:|---|
+| Fixed vs hybrid | -0.011 [-0.141, +0.124] | +0.048 [+0.002, +0.101] | -0.031 [-0.128, +0.067] | No broad retrieval gain; MRR gain only |
+| Recursive vs hybrid | -0.119 [-0.238, -0.015] | -0.017 [-0.130, +0.070] | -0.057 [-0.135, +0.019] | Worse Recall@10 |
+| Sparse vs hybrid | -0.198 [-0.315, -0.088] | -0.126 [-0.248, -0.019] | -0.163 [-0.238, -0.090] | Worse across these metrics |
+| Dense BGE-M3 vs hybrid | +0.159 [+0.058, +0.260] | +0.135 [+0.004, +0.296] | +0.159 [+0.040, +0.306] | Significant gain; select dense |
+| Dense E5 vs dense BGE-M3 | +0.008 [-0.163, +0.242] | +0.195 [+0.047, +0.370] | +0.043 [-0.062, +0.145] | MRR gain only; select E5 for full pipeline |
+| Rerank vs hybrid | +0.083 [-0.051, +0.249] | +0.247 [+0.055, +0.460] | +0.168 [+0.020, +0.351] | MRR/nDCG gain; recall@10 inconclusive |
 
-| Config | Set | Evidence Recall@5 | Evidence Recall@10 | MRR | nDCG@10 | Run |
-|---|---|---|---|---|---|---|
-| retrieval_hybrid | golden | TBD | TBD | TBD | TBD | TBD |
-| retrieval_hybrid | synth | TBD | TBD | TBD | TBD | TBD |
+## Vietnamese embedding breakdown
 
-Vietnamese subset (`language=vi`): TBD.
+The Vietnamese golden subset contains only 6 items. E5 minus BGE-M3 paired differences: Recall@10 -0.115 (95% bootstrap CI [-0.357, +0.071]), Recall@5 -0.128 [-0.350, 0.000], MRR +0.094 [0.000, +0.261], nDCG@10 -0.014 [-0.170, +0.095]. This small subset is mixed and does not establish a Vietnamese retrieval advantage for E5. See the language-specific summary below.
 
-## Conclusions per axis
+The full config now selects section-aware chunking, dense retrieval, E5 embeddings, and the already enabled reranker. `configs/full.yaml` records these settings. ADR decisions were updated in ADR-0002 through ADR-0004.
 
-| Axis | Helps / does not help / inconclusive | Evidence |
-|---|---|---|
-| Chunking | TBD | TBD |
-| Retrieval | TBD | TBD |
-| Embedding | TBD | TBD |
-| Reranker | TBD | TBD |
+## Golden per-language and overall metrics
 
-## Limitations
-Corpus of 12 papers in one niche; golden dev has few questions with evidence; evalset written
-by Claude Code and checked by models, without human review.
+## Summary (retrieval, 95% bootstrap CIs)
+
+### language=en
+
+| Run | doc_recall@3 | evidence_recall@10 | evidence_recall@5 | mrr | ndcg@10 |
+|---|---|---|---|---|---|
+| `20261020-2046_retr_fixed_golden` | 0.431 [0.181, 0.708] | 0.431 [0.292, 0.583] | 0.190 [0.056, 0.329] | 0.591 [0.254, 0.889] | 0.320 [0.211, 0.442] |
+| `20261020-2046_retr_hybrid_golden` | 0.361 [0.083, 0.667] | 0.468 [0.245, 0.648] | 0.241 [0.074, 0.407] | 0.558 [0.242, 0.861] | 0.409 [0.157, 0.637] |
+| `20261020-2047_retr_recursive_golden` | 0.403 [0.111, 0.694] | 0.255 [0.083, 0.403] | 0.236 [0.083, 0.375] | 0.472 [0.139, 0.806] | 0.270 [0.059, 0.466] |
+| `20261020-2049_retr_sparse_golden` | 0.431 [0.181, 0.708] | 0.213 [0.056, 0.389] | 0.167 [0.028, 0.333] | 0.529 [0.194, 0.848] | 0.279 [0.073, 0.502] |
+| `20261020-2050_retr_dense_golden` | 0.653 [0.444, 0.861] | 0.574 [0.315, 0.806] | 0.315 [0.111, 0.509] | 0.622 [0.271, 0.917] | 0.468 [0.210, 0.711] |
+| `20261020-2052_retr_dense_e5_golden` | 0.639 [0.444, 0.833] | 0.704 [0.583, 0.843] | 0.431 [0.319, 0.556] | 0.917 [0.750, 1.000] | 0.568 [0.413, 0.725] |
+| `20261020-2054_retr_rerank_golden` | 0.736 [0.486, 0.944] | 0.560 [0.310, 0.797] | 0.532 [0.292, 0.782] | 0.845 [0.536, 1.000] | 0.622 [0.364, 0.822] |
+
+### language=vi
+
+| Run | doc_recall@3 | evidence_recall@10 | evidence_recall@5 | mrr | ndcg@10 |
+|---|---|---|---|---|---|
+| `20261020-2046_retr_fixed_golden` | 0.706 [0.478, 0.917] | 0.499 [0.222, 0.815] | 0.400 [0.152, 0.703] | 0.606 [0.304, 0.889] | 0.440 [0.201, 0.690] |
+| `20261020-2046_retr_hybrid_golden` | 0.822 [0.600, 1.000] | 0.484 [0.200, 0.786] | 0.341 [0.056, 0.683] | 0.542 [0.214, 0.857] | 0.413 [0.156, 0.695] |
+| `20261020-2047_retr_recursive_golden` | 0.683 [0.350, 0.933] | 0.459 [0.191, 0.762] | 0.376 [0.144, 0.667] | 0.594 [0.281, 0.875] | 0.438 [0.194, 0.722] |
+| `20261020-2049_retr_sparse_golden` | 0.756 [0.489, 1.000] | 0.341 [0.056, 0.683] | 0.238 [0.056, 0.460] | 0.319 [0.069, 0.611] | 0.218 [0.064, 0.387] |
+| `20261020-2050_retr_dense_golden` | 0.656 [0.472, 0.867] | 0.694 [0.388, 0.944] | 0.576 [0.288, 0.883] | 0.750 [0.417, 1.000] | 0.672 [0.354, 0.942] |
+| `20261020-2052_retr_dense_e5_golden` | 0.711 [0.389, 0.944] | 0.580 [0.299, 0.852] | 0.449 [0.200, 0.730] | 0.844 [0.533, 1.000] | 0.658 [0.387, 0.890] |
+| `20261020-2054_retr_rerank_golden` | 0.794 [0.628, 0.944] | 0.557 [0.291, 0.833] | 0.491 [0.250, 0.757] | 0.750 [0.417, 1.000] | 0.537 [0.273, 0.815] |
+
+### overall
+
+| Run | doc_recall@3 | evidence_recall@10 | evidence_recall@5 | mrr | ndcg@10 |
+|---|---|---|---|---|---|
+| `20261020-2046_retr_fixed_golden` | 0.568 [0.388, 0.757] | 0.465 [0.306, 0.639] | 0.295 [0.133, 0.472] | 0.598 [0.368, 0.815] | 0.380 [0.236, 0.532] |
+| `20261020-2046_retr_hybrid_golden` | 0.592 [0.361, 0.800] | 0.476 [0.299, 0.645] | 0.291 [0.111, 0.476] | 0.550 [0.305, 0.783] | 0.411 [0.217, 0.589] |
+| `20261020-2047_retr_recursive_golden` | 0.543 [0.333, 0.751] | 0.357 [0.188, 0.535] | 0.306 [0.161, 0.469] | 0.533 [0.300, 0.771] | 0.354 [0.183, 0.534] |
+| `20261020-2049_retr_sparse_golden` | 0.593 [0.392, 0.799] | 0.277 [0.102, 0.461] | 0.202 [0.083, 0.333] | 0.424 [0.188, 0.681] | 0.248 [0.104, 0.392] |
+| `20261020-2050_retr_dense_golden` | 0.654 [0.507, 0.800] | 0.634 [0.421, 0.810] | 0.446 [0.259, 0.638] | 0.686 [0.427, 0.889] | 0.570 [0.363, 0.750] |
+| `20261020-2052_retr_dense_e5_golden` | 0.675 [0.494, 0.842] | 0.642 [0.457, 0.800] | 0.440 [0.301, 0.580] | 0.881 [0.683, 1.000] | 0.613 [0.435, 0.760] |
+| `20261020-2054_retr_rerank_golden` | 0.765 [0.613, 0.903] | 0.559 [0.372, 0.745] | 0.512 [0.338, 0.679] | 0.798 [0.571, 1.000] | 0.579 [0.381, 0.754] |

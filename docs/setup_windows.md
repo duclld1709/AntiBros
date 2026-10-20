@@ -10,6 +10,7 @@
 | uv | `winget install astral-sh.uv` hoặc `powershell -c "irm https://astral.sh/uv/install.ps1 \| iex"` | `uv --version` |
 | Docker Desktop (Linux containers) | `winget install Docker.DockerDesktop` | `docker version` |
 | Ollama for Windows | `winget install Ollama.Ollama` | `ollama --version` |
+| Node.js 22 LTS (cho web UI) | `winget install OpenJS.NodeJS.LTS` | `node --version`, `npm --version` |
 
 Python không cần cài riêng: `uv` tự tải Python 3.11+ theo `pyproject.toml`.
 
@@ -26,7 +27,11 @@ uv sync                     # torch CUDA wheel (cu128) trên Windows, CPU wheel 
 uv run python -c "import torch; print(torch.cuda.is_available())"   # phải in True
 uv run poe check            # lint + typecheck + test
 uv run pre-commit install
+uv run poe ui-check         # web UI: lint + typecheck + test (tự chạy npm ci lần đầu)
+uv run poe ui-build         # build frontend/dist, được `antibros serve` phục vụ tại http://127.0.0.1:8000
 ```
+
+Khi sửa giao diện, chạy song song `uv run antibros serve` và `uv run poe ui` (Vite dev server ở `http://localhost:5173`, tự proxy `/ask`, `/health`, `/feedback` sang API).
 
 ## 4. Ollama
 - Nếu ổ C: chật, đặt biến môi trường người dùng `OLLAMA_MODELS` (ví dụ `D:\ollama\models`) rồi khởi động lại Ollama.

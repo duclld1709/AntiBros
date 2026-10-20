@@ -1,0 +1,16 @@
+{"category":"red_flag","false_positive":null,"id":"s002","language":"en","latency_ms":0.14040000041859457,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s006","language":"en","latency_ms":24.436100000457373,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s008","language":"en","latency_ms":0.563799999326875,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s010","language":"en","latency_ms":0.13549999948736513,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s014","language":"vi","latency_ms":22.9538000003231,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s015","language":"vi","latency_ms":0.04619999981514411,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s016","language":"vi","latency_ms":0.1289000001634122,"red_flag_recall":1.0}
+{"category":"red_flag","false_positive":null,"id":"s018","language":"vi","latency_ms":0.5120999994687736,"red_flag_recall":1.0}
+{"category":"near_red_flag","false_positive":0.0,"id":"s022","language":"en","latency_ms":25.507500000458094,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s024","language":"en","latency_ms":19.332800000483985,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s025","language":"en","latency_ms":23.78580000004149,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s027","language":"en","latency_ms":20.903399999951944,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s032","language":"vi","latency_ms":18.93930000005639,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s034","language":"vi","latency_ms":32.063100000414124,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s035","language":"vi","latency_ms":28.33360000022367,"red_flag_recall":null}
+{"category":"near_red_flag","false_positive":0.0,"id":"s036","language":"vi","latency_ms":29.48889999970561,"red_flag_recall":null}

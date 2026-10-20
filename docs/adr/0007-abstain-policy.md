@@ -1,7 +1,7 @@
 # ADR-0007: Abstain policy and thresholds
 
-- **Status:** Proposed
-- **Date:** TBD
+- **Status:** Accepted
+- **Date:** 2026-10-20
 - **Milestone:** M4
 
 ## Context

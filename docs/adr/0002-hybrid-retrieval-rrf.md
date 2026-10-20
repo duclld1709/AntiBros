@@ -1,7 +1,7 @@
 # ADR-0002: Hybrid retrieval with Reciprocal Rank Fusion
 
-- **Status:** Proposed
-- **Date:** TBD
+- **Status:** Rejected
+- **Date:** 2026-10-20
 - **Milestone:** M3 (proposed), M4 (decided)
 
 ## Context
@@ -16,13 +16,13 @@ Scientific text mixes semantic questions ("does training to failure help?") with
 | Hybrid, RRF | Rank-based, no score normalization, one parameter `k` | Ignores score magnitude |
 
 ## Decision
-Proposed: **Hybrid with RRF**. Decide after the M4 ablation (sparse vs dense vs hybrid, on dev).
+**Dense retrieval with `bge-m3`** is selected over hybrid RRF based on M4 golden dev results. Dense improved evidence Recall@10 by 0.159 (95% paired CI [+0.058, +0.260]), MRR by 0.135 (CI [+0.004, +0.296]), and nDCG@10 by 0.159 (CI [+0.040, +0.306]) over hybrid. The full pipeline uses E5 following ADR-0003's ranking result.
 
 ## Evidence
 Planned runs: `configs/ablations/{retrieval_sparse / retrieval_dense / retrieval_hybrid}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:
 TBD — Evidence Recall@10, MRR, nDCG@10 per retrieval mode (ADR-0015), with paired bootstrap CIs.
 
 ## Consequences
-- **Positive:** robust baseline with little tuning.
-- **Negative:** two retrieval calls; slightly higher latency.
+- **Positive:** one dense retrieval call; better golden dev Recall@10, MRR and nDCG@10 than hybrid.
+- **Negative:** may miss exact lexical matches; sparse and hybrid scored higher on selected individual items.
 - **Revisit if:** a learned fusion or reranker alone beats hybrid on dev.

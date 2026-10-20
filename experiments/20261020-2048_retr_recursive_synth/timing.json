@@ -1,0 +1,14 @@
+{
+  "budget_key": "retrieval",
+  "budget_s": 120.0,
+  "over_budget": false,
+  "phases": {
+    "retrieval": {
+      "completed": true,
+      "n_items": 94,
+      "seconds": 18.38,
+      "started_at": "2026-10-20T13:49:28+00:00"
+    }
+  },
+  "total_s": 18.38
+}

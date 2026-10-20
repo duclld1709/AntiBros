@@ -17,9 +17,10 @@ uv run antibros index --config configs/baseline.yaml --chunker section_aware --e
 uv run antibros serve --config configs/baseline.yaml --models configs/models/laptop.yaml
 ```
 
-The API listens on `http://127.0.0.1:8000` (`/health`, `/ask`, `/feedback`). Start the UI in a
-second terminal with `uv run streamlit run ui/streamlit_app.py`. Ollama must be running with the
-models listed in `configs/models/laptop.yaml`. Setup details: [docs/setup_windows.md](docs/setup_windows.md).
+The API listens on `http://127.0.0.1:8000` (`/health`, `/ask`, `/feedback`). The web UI (React +
+TypeScript, `frontend/`, Node.js 22) is served on the same address once built with
+`uv run poe ui-build`; for UI work run `uv run poe ui` (Vite dev server on `http://localhost:5173`,
+proxied to the API). Ollama must be running with the models listed in `configs/models/laptop.yaml`. Setup details: [docs/setup_windows.md](docs/setup_windows.md).
 
 Run the M3 development baseline with:
 
