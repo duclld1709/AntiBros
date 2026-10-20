@@ -102,6 +102,8 @@ Dưới đây là danh sách ứng viên. Ngày 2026-10-20 đã xác nhận các
 
 **Dự phòng:** Kreider & Stout — *Creatine in Health and Disease* (Nutrients, 2021); Devries et al. — higher-protein diets and kidney function, meta-analysis (J Nutr, 2018). PMCID và license của hai bài này chưa xác minh.
 
+**Kết quả xác minh ở M1 (2026-10-20, `antibros manifest`):** cả 12 bài đều đạt (OA subset, có full text, license CC, đúng năm), nên không phải dùng bài dự phòng. Bài #10 (PMC11703406) xuất bản năm **2025**. License: 10 bài CC BY, PMC5867436 là CC BY-NC, PMC8978023 là CC BY-NC-ND. Danh sách ứng viên nằm ở `configs/corpus/candidates.yaml`, log xác minh ở `reports/corpus_verification.json`.
+
 **Đặc điểm và hệ quả cho thiết kế:**
 - 12 bài full text, sau khi bỏ reference list, ước tính **~250–400 chunk** cho mỗi chiến lược chunking. Ingest và index chỉ mất vài phút.
 - Corpus nhỏ thì retrieval ở mức *document* gần như tầm thường: Recall@10 trên 12 bài gần như luôn bằng 1. Vì vậy **metric retrieval chính được tính ở mức đoạn bằng chứng (evidence span)**, không tính ở mức document (§6.3, ADR-0015).
@@ -120,6 +122,8 @@ Dưới đây là danh sách ứng viên. Ngày 2026-10-20 đã xác nhận các
 }
 ```
 **Evidence level** (suy ra từ `pub_types`, nếu thiếu thì dùng rule trên tiêu đề): 1 = Meta-analysis / Systematic review · 2 = RCT · 3 = Observational · 4 = Narrative review / position stand / guideline · 5 = Khác. Quy tắc mapping phải có unit test, gồm cả trường hợp "scoping review".
+
+Thứ tự quy tắc đã chốt ở M1 (ADR-0018): (1) scoping review / position stand → 4; (2) `pub_types` cụ thể; (3) từ khóa trên tiêu đề; (4) `pub_types` chỉ là review chung chung → 4; (5) từ khóa thiết kế nghiên cứu trong abstract (ví dụ "randomly assigned" → 2), nếu không có thì 5. Quy tắc (5) cần cho bài RCT PMC5214805, vì bài này chỉ được gắn `research-article`.
 
 ### 3.5 Chunk schema
 ```json
@@ -261,7 +265,8 @@ flowchart LR
 Mỗi bước (rerank, rewrite, grade, verify, mỗi lớp guard) **bật/tắt được qua config** để phục vụ ablation. Các giá trị k, n và mọi ngưỡng đều nằm trong config.
 
 ### 5.3 Thành phần
-- **Chunking:** `fixed` (512 token, overlap 64) · `recursive` · `section_aware` (tách theo section, rồi recursive bên trong; prepend `title + section` khi embed). Mọi chunker ghi `char_start`/`char_end`.
+- **Chunking:** `fixed` (512 token, overlap 64) · `recursive` (tối đa 512 token, không overlap) · `section_aware` (tách theo section, rồi recursive bên trong; prepend `title + section` khi embed). Mọi chunker ghi `char_start`/`char_end`. Token đếm bằng tokenizer của bge-m3; multilingual-e5-large dùng cùng vocabulary XLM-R, nên hai embedder dùng chung một bộ chunk.
+- **Embedding:** bge-m3 cho cả dense và sparse (một lượt forward). e5 chỉ có dense, nên collection e5 chỉ hỗ trợ retriever `dense`; ablation embedding so sánh hai model ở chế độ dense.
 - **Vector store:** Qdrant, named vectors (dense + sparse), payload index cho `year`, `evidence_level`, `topic`. Point ID tất định suy ra từ `chunk_id`.
 - **Retrieval:** `sparse` · `dense` · `hybrid` (RRF), có filter tùy chọn.
 - **Tracing:** backend `jsonl` (mặc định), `langfuse` (tùy chọn), `none`.
@@ -517,7 +522,7 @@ docker compose up
 - Danh sách:
   - 0001 Qdrant · 0002 Hybrid RRF · 0003 bge-m3 · 0004 Section-aware chunking · 0005 LangGraph · 0006 Citation verification · 0007 Abstain policy · 0008 Chỉ dùng dữ liệu open access
   - 0009 Evalset đóng băng & tag theo milestone · 0010 Evalset do Claude Code soạn, không có người review · 0011 Dev bằng LLM local, client không phụ thuộc provider · 0012 Pipeline một LLM, judge khác họ
-  - 0013 Chỉ dùng laptop, corpus ngách nhỏ, ngân sách thời gian eval · 0014 Đánh giá cuối trên test khai báo trước · 0015 Nhãn relevance theo evidence span · 0016 Môi trường phát triển Windows native
+  - 0013 Chỉ dùng laptop, corpus ngách nhỏ, ngân sách thời gian eval · 0014 Đánh giá cuối trên test khai báo trước · 0015 Nhãn relevance theo evidence span · 0016 Môi trường phát triển Windows native · 0017 Adapter Ollama native · 0018 Quy tắc clean JATS và evidence level
 
 ---
 
@@ -557,9 +562,11 @@ antibros/
 
 **Các lệnh CLI** (gõ trong PowerShell hoặc Git Bash, sau khi kích hoạt venv, hoặc thêm `uv run` phía trước):
 ```powershell
+antibros manifest                                    # xác minh ứng viên qua Europe PMC → corpus_manifest.jsonl
 antibros ingest --manifest evalsets/v1/corpus_manifest.jsonl
 antibros index  --config configs/<x>.yaml
 antibros stats                                       # → reports/corpus_stats.md
+antibros search "<câu hỏi>" --config configs/<x>.yaml   # kiểm tra retrieval thủ công
 antibros evalset build | check | verify-models | freeze | verify | leakcheck
 antibros eval retrieval --config configs/ablations/retrieval_<x>.yaml --set golden|synth   # không cần LLM
 antibros eval safety  --config configs/ablations/guard_<x>.yaml --split dev
