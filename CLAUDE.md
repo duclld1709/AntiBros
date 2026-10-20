@@ -13,7 +13,7 @@ AntiBros là trợ lý hỏi đáp dinh dưỡng tăng cơ (**protein & creatine
 👉 **Trước mỗi task, đọc `PROJECT_SPEC.md` và `docs/milestones/<milestone hiện tại>.md`.** Trước khi chạy đánh giá cuối, đọc thêm `docs/runbooks/final_eval.md`.
 
 ## Milestone hiện tại
-**M2 — Evalset & eval harness**
+**M4 — Pipeline nâng cao, guardrails & ablation** (code xong; chờ các run dev trên laptop, xem `docs/runbooks/m4_dev_runs.md`)
 
 ---
 
@@ -50,7 +50,10 @@ antibros eval retrieval --config configs/ablations/retrieval_<x>.yaml --set gold
 antibros eval safety  --config configs/ablations/guard_<x>.yaml --split dev
 antibros eval predict --config configs/<x>.yaml --models configs/models/laptop.yaml --split dev --tag <name> [--limit 5]
 antibros eval judge --run experiments/<run> --models configs/models/laptop.yaml
+antibros eval tune --config configs/full.yaml --models configs/models/laptop.yaml --param grade_min_rerank_score|verify_max_removed_ratio
+antibros summarize experiments/<a> experiments/<b> [--out reports/<x>.md]
 antibros compare experiments/<a> experiments/<b>
+antibros plan lock --guard-run experiments/<g1> --guard-run experiments/<g2> --guard-run experiments/<g3>   # cuối M4
 antibros eval final --plan configs/final_eval_plan.yaml   # chỉ ở M5, hỏi chủ dự án trước
 antibros serve | uv run poe ui
 uv run python scripts/env_report.py            # GPU, driver, torch, Ollama, digest model

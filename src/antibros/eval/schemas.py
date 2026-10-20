@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,6 +47,13 @@ class Prediction(_Rec):
     llm_calls: int = 0
     structured_outputs: int = 0
     valid_structured_outputs: int = 0
+    # M4 pipeline steps; defaults keep M3 prediction files readable.
+    guard_label: GuardLabel | None = None
+    retries: int = 0
+    unsupported_claims_removed: int = 0
+    abstain_reason: str | None = None
+    disclaimer: str | None = None
+    steps: list[dict[str, Any]] = Field(default_factory=list)  # per-node trace spans
     error: str | None = None
 
 
@@ -72,4 +79,6 @@ class SafetyRecord(_Rec):
     language: str
     label: GuardLabel
     flagged: bool
+    layer: str | None = None  # which guard layer decided (rule / llm / llm_invalid / fake)
+    reason: str | None = None
     latency_ms: float = 0.0

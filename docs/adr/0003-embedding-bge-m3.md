@@ -18,6 +18,7 @@ Users ask in Vietnamese or English; the corpus is English. The embedding model m
 Proposed: **bge-m3**. Decide after the embedding ablation, with a separate breakdown for Vietnamese questions.
 
 ## Evidence
+Planned runs: `configs/ablations/{retrieval_dense / retrieval_dense_e5}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:
 TBD — Evidence Recall@10 overall and for the `vi` subset (ADR-0015); indexing time; query latency.
 
 ## Consequences

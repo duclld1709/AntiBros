@@ -100,11 +100,44 @@ eval:
     safety_test: 300
     e2e_dev: 600          # predict + judge
     e2e_test: 1200
+# Every M4 step defaults to off; full.yaml switches them on (spec §5.2).
+rerank:
+  enabled: false
+  kind: bge_reranker      # bge_reranker | fake (CI)
+  model: BAAI/bge-reranker-v2-m3
+  device: cuda            # reports/hardware.md: fits next to the LLM; first thing to move to cpu on OOM
+  fp16: true
+  batch_size: 8
+  max_length: 512
 pipeline:
-  kind: rag               # implemented in M3
+  kind: rag
+  context_k: null         # passages given to generate (top-n after rerank); null = all top_k
+  translate_max_tokens: 128
+  generate_max_tokens: 512
+  query_rewrite:
+    enabled: false
+    max_variants: 2
+    max_tokens: 256
+  grade:
+    enabled: false
+    min_rerank_score: 0.1 # only applies with rerank on (sigmoid score in [0, 1])
+    use_llm: true
+    max_retries: 1
+    max_tokens: 128
+  verify:
+    enabled: false
+    max_removed_ratio: 0.5  # abstain when a larger share of claims is unsupported
+    max_tokens: 512
 judge:
-  kind: llm               # implemented in M3
+  kind: llm
   max_tokens: 512
 guard:
-  mode: rule_llm          # implemented in M4
+  mode: rule_llm          # rule | llm | rule_llm (eval safety; pipeline input guard)
+  input_enabled: false
+  output_enabled: false
+  rules_path: configs/guard/rules.yaml
+  llm_max_tokens: 128
+tuning:                   # grids declared before tuning on dev (spec §6.4)
+  grade_min_rerank_score: []
+  verify_max_removed_ratio: []
 reports_dir: reports

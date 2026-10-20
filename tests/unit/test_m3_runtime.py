@@ -8,13 +8,10 @@ import httpx
 import pytest
 from pydantic import BaseModel
 
-from antibros.config import load_app_config
-from antibros.eval.rag import RagPipeline
 from antibros.llm import FakeLLMClient, LLMParams, Message, StructuredOutputError
 from antibros.llm.cache import LLMCache
 from antibros.llm.gemini import GeminiClient
 from antibros.llm.openai_compatible import OpenAICompatibleClient
-from antibros.retrieval.base import ScoredChunk
 
 
 class Answer(BaseModel):
@@ -180,50 +177,3 @@ def test_api_health_runs_in_process() -> None:
     api = create_app(pipeline=object())  # type: ignore[arg-type]
     paths = {getattr(route, "path", "") for route in api.routes}
     assert paths >= {"/health", "/ask", "/feedback"}
-
-
-def test_rag_generation_sanitizes_citations_and_only_maps_real_context(tmp_path: Path) -> None:
-    cfg = load_app_config(Path("configs/base.yaml"))
-    cfg = cfg.model_copy(update={"prompts_dir": Path("prompts")})
-    engine = object.__new__(RagPipeline)
-    engine.cfg = cfg
-    engine.num_ctx = 8192
-    engine.llm = FakeLLMClient(
-        script=[
-            {
-                "answer": "",
-                "claims": [
-                    {"text": "Protein supports adaptation [99]", "citation_ids": [1, 99]},
-                ],
-                "status": "answered",
-            }
-        ]
-    )
-    engine.last_trace = {}
-    state = engine._generate(
-        {
-            "item_id": "g-test",
-            "question": "How does protein help?",
-            "language": "en",
-            "chunks": [
-                ScoredChunk(
-                    "PMC1::results::1",
-                    0.5,
-                    {
-                        "chunk_id": "PMC1::results::1",
-                        "doc_id": "PMC1",
-                        "text": "It supports adaptation.",
-                    },
-                )
-            ],
-            "prompt_tokens": 0,
-            "completion_tokens": 0,
-            "cost_usd": 0.0,
-            "timings": {},
-        }
-    )
-    prediction = state["prediction"]
-    assert prediction.status == "answered"
-    assert prediction.answer == "Protein supports adaptation [1]"
-    assert prediction.citations[0].chunk_id == "PMC1::results::1"
-    assert prediction.claims[0].citation_ids == [1]

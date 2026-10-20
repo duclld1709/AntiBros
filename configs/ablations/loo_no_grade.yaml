@@ -1,0 +1,6 @@
+# Leave-one-out: full without grade_context (no retry, no pre-generation abstain).
+extends: ../full.yaml
+name: loo_no_grade
+pipeline:
+  grade:
+    enabled: false

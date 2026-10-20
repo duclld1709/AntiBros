@@ -1,0 +1,6 @@
+# Embedding axis: multilingual-e5-large, dense (e5 has no sparse vectors, spec §5.3).
+# Compare with retrieval_dense.yaml, overall and on the Vietnamese subset.
+extends: retrieval_dense.yaml
+name: retrieval_dense_e5
+retrieval:
+  embedder: e5_large

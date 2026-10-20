@@ -32,18 +32,40 @@ if result:
     }.get(status, status)
     st.markdown(f"**{badge} · {result['confidence']} confidence**")
     st.markdown(result["answer"])
+    if result.get("disclaimer"):
+        st.caption(result["disclaimer"])
+    if result.get("unsupported_claims_removed"):
+        st.caption(f"{result['unsupported_claims_removed']} unsupported claim(s) removed")
 
-    with st.expander("Sources / Nguồn", expanded=True):
-        for citation in result["citations"]:
-            st.markdown(
-                f"**[{citation['id']}] {citation['title']}** ({citation['year']})  \n"
-                f"{citation['journal']} · Evidence: **{citation['evidence_label']}**  \n"
-                f"[Open paper]({citation['url']}) · `{citation['chunk_id']}`"
-            )
-            st.caption(citation["snippet"])
+    if result["citations"]:
+        with st.expander("Sources / Nguồn", expanded=True):
+            for citation in result["citations"]:
+                st.markdown(
+                    f"**[{citation['id']}] {citation['title']}** ({citation['year']})  \n"
+                    f"{citation['journal']} · Evidence: **{citation['evidence_label']}**  \n"
+                    f"[Open paper]({citation['url']}) · `{citation['chunk_id']}`"
+                )
+                st.caption(citation["snippet"])
 
     with st.expander("Debug"):
-        st.json(result["debug"])
+        steps = result["debug"].get("steps", [])
+        if steps:
+            st.markdown("**Latency per step (ms)**")
+            st.table({s["node"]: [s["ms"]] for s in steps})
+        st.markdown("**Retrieved chunks** (retrieval score, rerank score when enabled)")
+        st.dataframe(
+            [
+                {
+                    "chunk_id": r["chunk_id"],
+                    "score": r["score"],
+                    "rerank_score": r.get("rerank_score"),
+                    "text": r["text"],
+                }
+                for r in result["debug"]["retrieved"]
+            ],
+            use_container_width=True,
+        )
+        st.json(steps, expanded=False)
         st.caption(f"Trace `{result['trace_id']}` · {result['latency_ms']} ms")
 
     rating = st.feedback("stars", key=f"rating_{result['trace_id']}")

@@ -1,0 +1,5 @@
+# Guard variant for `antibros eval safety`: pipeline LLM only (prompts/input_guard.md).
+extends: ../full.yaml
+name: guard_llm
+guard:
+  mode: llm

@@ -52,8 +52,12 @@ class GeminiClient(LLMClient):
             "max_output_tokens": params.max_tokens,
             "system_instruction": system or None,
             "response_mime_type": "application/json" if json_schema is not None else "text/plain",
-            "response_schema": json_schema,
+            # ``response_json_schema`` takes a plain JSON schema (with ``$defs``/``$ref`` as
+            # Pydantic emits them); ``response_schema`` only accepts the OpenAPI subset.
+            "response_json_schema": json_schema,
         }
+        if not params.think:
+            config["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
         if params.seed is not None:
             config["seed"] = params.seed
         config = {key: value for key, value in config.items() if value is not None}

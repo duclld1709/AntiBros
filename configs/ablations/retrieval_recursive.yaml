@@ -1,0 +1,5 @@
+# Chunking axis: recursive chunks (max 512 tokens) instead of section_aware.
+extends: retrieval_hybrid.yaml
+name: retrieval_recursive
+retrieval:
+  chunker: recursive

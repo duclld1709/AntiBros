@@ -66,7 +66,11 @@ def make_judge(cfg: AppConfig, models: ModelProfile) -> Judge:
         models.judge, Settings(), cfg.llm_cache.dir if cfg.llm_cache.enabled else None
     )
     return LLMJudge(
-        client, load_prompt(cfg.prompts_dir, "judge"), cfg.judge.max_tokens, models.judge.num_ctx
+        client,
+        load_prompt(cfg.prompts_dir, "judge"),
+        cfg.judge.max_tokens,
+        models.judge.num_ctx,
+        models.judge.temperature,
     )
 
 
@@ -79,20 +83,25 @@ class JudgeScores(BaseModel):
 
 
 class LLMJudge:
-    def __init__(self, client: LLMClient, prompt: PromptTemplate, max_tokens: int, num_ctx: int):
-        self.client, self.prompt, self.max_tokens, self.num_ctx = (
-            client,
-            prompt,
-            max_tokens,
-            num_ctx,
-        )
+    def __init__(
+        self,
+        client: LLMClient,
+        prompt: PromptTemplate,
+        max_tokens: int,
+        num_ctx: int,
+        temperature: float = 0.0,
+    ):
+        self.client, self.prompt = client, prompt
+        self.max_tokens, self.num_ctx, self.temperature = max_tokens, num_ctx, temperature
 
     def judge(self, item: GoldenItem, pred: Prediction) -> Judgment:
         if pred.status != "answered":
             return Judgment(id=item.id)
-        cited = {n for claim in pred.claims for n in claim.citation_ids}
+        # Citation numbers map to chunks via the citation table (numbered by code), not by
+        # position in the context list.
+        texts = {ctx.chunk_id: ctx.text for ctx in pred.contexts}
         contexts = "\n\n".join(
-            f"[{n}] {ctx.text}" for n, ctx in enumerate(pred.contexts, 1) if n in cited
+            f"[{c.id}] {texts[c.chunk_id]}" for c in pred.citations if c.chunk_id in texts
         )
         claims = "\n".join(f"- {c.text} (citations: {c.citation_ids})" for c in pred.claims)
         result = self.client.complete(
@@ -105,7 +114,7 @@ class LLMJudge:
             ),
             schema=JudgeScores,
             params=LLMParams(
-                temperature=0,
+                temperature=self.temperature,
                 max_tokens=self.max_tokens,
                 num_ctx=self.num_ctx,
             ),

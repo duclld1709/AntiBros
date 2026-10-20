@@ -1,0 +1,39 @@
+# Fixed user-facing responses (code picks one by status and language). Not LLM prompts.
+safety_redirect:
+  vi: >-
+    Câu hỏi của bạn liên quan đến tình trạng sức khỏe cần được bác sĩ hoặc chuyên gia y tế
+    đánh giá trực tiếp, nên AntiBros không đưa ra tư vấn chuyên môn trong trường hợp này. Hãy
+    trao đổi với bác sĩ (hoặc chuyên gia dinh dưỡng lâm sàng) trước khi dùng thực phẩm bổ sung
+    hay thay đổi chế độ ăn. Nếu bạn đang có triệu chứng như đau ngực, khó thở, ngất hoặc nước
+    tiểu sẫm màu, hãy đến cơ sở y tế ngay.
+  en: >-
+    Your question involves a health condition that a doctor or other qualified clinician
+    needs to assess in person, so AntiBros does not give specific advice here. Please talk to
+    your doctor (or a clinical dietitian) before taking supplements or changing your diet. If
+    you have symptoms such as chest pain, shortness of breath, fainting or dark urine, seek
+    medical care now.
+off_topic:
+  vi: >-
+    AntiBros chỉ trả lời câu hỏi về protein và creatine cho tập luyện tăng cơ, dựa trên tài
+    liệu khoa học trong cơ sở dữ liệu. Câu hỏi này nằm ngoài phạm vi đó.
+  en: >-
+    AntiBros only answers questions about protein and creatine for muscle building, based on
+    the scientific papers in its database. This question is outside that scope.
+abstain:
+  vi: >-
+    Các tài liệu trong cơ sở dữ liệu chưa đủ bằng chứng để trả lời câu hỏi này.
+  en: >-
+    The papers in the database do not provide enough evidence to answer this question.
+output_blocked:
+  vi: >-
+    AntiBros không đưa ra liều dùng cho thuốc hoặc chất bị cấm. Vui lòng hỏi bác sĩ hoặc dược
+    sĩ.
+  en: >-
+    AntiBros does not give dosing for medicines or banned substances. Please ask a doctor or
+    pharmacist.
+disclaimer:
+  vi: >-
+    Thông tin chỉ nhằm mục đích tham khảo, dựa trên các nghiên cứu được trích dẫn, và không
+    thay thế tư vấn y tế.
+  en: >-
+    For information only, based on the cited studies; not a substitute for medical advice.

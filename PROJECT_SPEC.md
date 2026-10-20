@@ -264,6 +264,14 @@ flowchart LR
 
 Mỗi bước (rerank, rewrite, grade, verify, mỗi lớp guard) **bật/tắt được qua config** để phục vụ ablation. Các giá trị k, n và mọi ngưỡng đều nằm trong config.
 
+Chi tiết đã chốt ở M4 (ADR-0021):
+- Bước bị tắt không có mặt trong graph đã compile; trace chỉ ghi những bước thật sự chạy.
+- Config ablation kế thừa bằng `extends:` (deep merge). Plan ghi sha256 của config đã resolve và của từng file trong chuỗi kế thừa.
+- `pipeline.context_k` là số passage đưa vào generate (top-n sau rerank).
+- Ngưỡng điểm reranker của grade chỉ áp dụng khi bật rerank.
+- Khi LLM trả JSON hỏng: grade và verify chuyển thành abstain; rewrite dùng lại câu hỏi gốc; guard LLM trả `safe`. Lỗi hạ tầng không bị nuốt, mà được ghi `status=error`.
+- Trên golden, `safety_redirect` được tính là abstain. Evidence Recall@k của run e2e tính từ ranking cuối cùng ghi trong trace của prediction.
+
 ### 5.3 Thành phần
 - **Chunking:** `fixed` (512 token, overlap 64) · `recursive` (tối đa 512 token, không overlap) · `section_aware` (tách theo section, rồi recursive bên trong; prepend `title + section` khi embed). Mọi chunker ghi `char_start`/`char_end`. Token đếm bằng tokenizer của bge-m3; multilingual-e5-large dùng cùng vocabulary XLM-R, nên hai embedder dùng chung một bộ chunk.
 - **Embedding:** bge-m3 cho cả dense và sparse (một lượt forward). e5 chỉ có dense, nên collection e5 chỉ hỗ trợ retriever `dense`; ablation embedding so sánh hai model ở chế độ dense.
@@ -523,6 +531,7 @@ docker compose up
   - 0001 Qdrant · 0002 Hybrid RRF · 0003 bge-m3 · 0004 Section-aware chunking · 0005 LangGraph · 0006 Citation verification · 0007 Abstain policy · 0008 Chỉ dùng dữ liệu open access
   - 0009 Evalset đóng băng & tag theo milestone · 0010 Evalset do Claude Code soạn, không có người review · 0011 Dev bằng LLM local, client không phụ thuộc provider · 0012 Pipeline một LLM, judge khác họ
   - 0013 Chỉ dùng laptop, corpus ngách nhỏ, ngân sách thời gian eval · 0014 Đánh giá cuối trên test khai báo trước · 0015 Nhãn relevance theo evidence span · 0016 Môi trường phát triển Windows native · 0017 Adapter Ollama native · 0018 Quy tắc clean JATS và evidence level
+  - 0019 Verifier evalset qwen3.5:4b · 0020 LLM judge · 0021 Ghép pipeline M4, kế thừa config và fallback
 
 ---
 
@@ -573,6 +582,9 @@ antibros eval safety  --config configs/ablations/guard_<x>.yaml --split dev
 antibros eval predict --config configs/<x>.yaml --models configs/models/<m>.yaml --split dev --tag NAME [--limit N]
 antibros eval judge   --run experiments/<run> --models configs/models/<m>.yaml
 antibros eval report  --run experiments/<run>
+antibros eval tune    --config configs/full.yaml --models configs/models/<m>.yaml --param <ngưỡng>   # chỉ lưới khai báo trước, dev
+antibros summarize experiments/<run>...                               # bảng metric kèm CI cho report
+antibros plan lock --guard-run experiments/<run> ...                  # cuối M4: chọn guard theo quy tắc, ghi hash/digest
 antibros eval final   --plan configs/final_eval_plan.yaml          # cách duy nhất để chạy test
 antibros compare experiments/<runA> experiments/<runB>
 antibros serve

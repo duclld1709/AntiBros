@@ -1,0 +1,9 @@
+# Retrieval ablation reference point (one factor at a time, spec §6.4):
+# section_aware chunks, bge-m3, hybrid RRF, no reranker. Every other retrieval_*.yaml changes
+# exactly one setting from this file.
+extends: ../baseline.yaml
+name: retrieval_hybrid
+retrieval:
+  chunker: section_aware
+  embedder: bge_m3
+  mode: hybrid

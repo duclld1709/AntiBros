@@ -19,6 +19,7 @@ Scientific text mixes semantic questions ("does training to failure help?") with
 Proposed: **Hybrid with RRF**. Decide after the M4 ablation (sparse vs dense vs hybrid, on dev).
 
 ## Evidence
+Planned runs: `configs/ablations/{retrieval_sparse / retrieval_dense / retrieval_hybrid}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:
 TBD — Evidence Recall@10, MRR, nDCG@10 per retrieval mode (ADR-0015), with paired bootstrap CIs.
 
 ## Consequences
