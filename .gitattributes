@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+# Frozen evalsets: byte-exact, never normalise line endings (checksums are on bytes).
+evalsets/** -text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.gz binary
+*.zip binary
+*.pt binary
+*.bin binary
+*.safetensors binary
+*.gguf binary
+*.mp4 binary
