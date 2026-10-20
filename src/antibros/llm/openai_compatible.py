@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import time
 from typing import Any
 
@@ -9,6 +10,26 @@ import httpx
 
 from antibros.llm.base import LLMClient, LLMParams, Message, Usage
 from antibros.llm.cache import LLMCache
+
+
+def strict_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Adapt a Pydantic JSON schema to OpenAI strict structured outputs: every object needs
+    ``additionalProperties: false`` and must list all of its properties as required."""
+
+    def visit(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("type") == "object" and "properties" in node:
+                node["additionalProperties"] = False
+                node["required"] = list(node["properties"])
+            for value in node.values():
+                visit(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value)
+
+    out = copy.deepcopy(schema)
+    visit(out)
+    return out
 
 
 class OpenAICompatibleClient(LLMClient):
@@ -53,7 +74,11 @@ class OpenAICompatibleClient(LLMClient):
         if schema is not None:
             body["response_format"] = {
                 "type": "json_schema",
-                "json_schema": {"name": "structured_response", "strict": True, "schema": schema},
+                "json_schema": {
+                    "name": "structured_response",
+                    "strict": True,
+                    "schema": strict_json_schema(schema),
+                },
             }
         return body
 

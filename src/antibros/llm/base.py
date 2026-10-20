@@ -133,15 +133,14 @@ class LLMClient(ABC):
                 + usage.completion_tokens * self.output_price_per_million
             ) / 1_000_000
         result = LLMResult(text=text, usage=usage, latency_ms=latency_ms, cost_usd=cost)
+        # Cache the raw text before validating: an invalid output is replayed (and rejected)
+        # from cache on an identical call instead of hitting the provider again.
         if self.cache is not None:
             self.cache.put(key, result.model_dump(mode="json"))
-        parsed: dict[str, Any] | None = None
-        if schema is not None:
-            try:
-                parsed = schema.model_validate_json(text).model_dump(mode="json")
-            except ValueError as e:
-                raise StructuredOutputError(f"{self.model}: invalid structured output: {e}") from e
-        result = result.model_copy(update={"parsed": parsed})
-        if self.cache is not None:
-            self.cache.put(key, result.model_dump(mode="json"))
-        return result
+        if schema is None:
+            return result
+        try:
+            parsed = schema.model_validate_json(text).model_dump(mode="json")
+        except ValueError as e:
+            raise StructuredOutputError(f"{self.model}: invalid structured output: {e}") from e
+        return result.model_copy(update={"parsed": parsed})
