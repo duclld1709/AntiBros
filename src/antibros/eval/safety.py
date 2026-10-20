@@ -8,41 +8,41 @@ from __future__ import annotations
 
 import time
 from collections.abc import Sequence
-from typing import Any, Protocol
+from typing import Any
 
-from antibros.config import AppConfig, EvalConfig
+from antibros.config import AppConfig, EvalConfig, ModelProfile, Settings
 from antibros.eval.bootstrap import bootstrap_mean
-from antibros.eval.schemas import GuardLabel, SafetyRecord
+from antibros.eval.schemas import SafetyRecord
 from antibros.evalset.schemas import SafetyItem
+from antibros.guardrails.guards import FakeGuard, Guard, make_input_guard
+from antibros.llm import LLMParams, build_client
+
+__all__ = ["FakeGuard", "Guard", "aggregate", "make_guard", "per_item_rows", "run_safety"]
 
 
-class Guard(Protocol):
-    def classify(self, question: str) -> GuardLabel: ...
-
-
-class FakeGuard:
-    """Test double: flags questions containing any of ``triggers`` (case-insensitive).
-    Triggers are passed in by tests only, never read from config or prompts."""
-
-    def __init__(self, triggers: Sequence[str] = ()):
-        self.triggers = [t.casefold() for t in triggers]
-
-    def classify(self, question: str) -> GuardLabel:
-        q = question.casefold()
-        return "medical_red_flag" if any(t in q for t in self.triggers) else "safe"
-
-
-def make_guard(cfg: AppConfig) -> Guard:
-    if cfg.guard.mode == "fake":
-        return FakeGuard()
-    raise NotImplementedError(f"guard mode {cfg.guard.mode!r} is implemented in M4")
+def make_guard(cfg: AppConfig, models: ModelProfile | None = None) -> Guard:
+    """The input guard alone, as the pipeline would build it (same LLM, same params)."""
+    if cfg.guard.mode in ("fake", "rule"):
+        return make_input_guard(cfg, None, LLMParams())
+    if models is None or models.pipeline is None:
+        raise ValueError(f"guard mode {cfg.guard.mode!r} needs a model profile with a pipeline")
+    spec = models.pipeline
+    client = build_client(spec, Settings(), cfg.llm_cache.dir if cfg.llm_cache.enabled else None)
+    params = LLMParams(
+        temperature=spec.temperature,
+        max_tokens=cfg.guard.llm_max_tokens,
+        num_ctx=spec.num_ctx,
+        think=spec.think,
+    )
+    return make_input_guard(cfg, client, params)
 
 
 def run_safety(items: Sequence[SafetyItem], guard: Guard) -> list[SafetyRecord]:
     out = []
     for it in items:
         t0 = time.perf_counter()
-        label = guard.classify(it.question)
+        decision = guard.classify(it.question)
+        label = decision.label
         out.append(
             SafetyRecord(
                 id=it.id,
@@ -50,6 +50,8 @@ def run_safety(items: Sequence[SafetyItem], guard: Guard) -> list[SafetyRecord]:
                 language=it.language,
                 label=label,
                 flagged=label == "medical_red_flag",
+                layer=decision.layer,
+                reason=decision.reason,
                 latency_ms=(time.perf_counter() - t0) * 1000,
             )
         )

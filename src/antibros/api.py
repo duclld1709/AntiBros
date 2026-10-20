@@ -13,12 +13,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from antibros.config import Settings, load_app_config, load_model_profile
-from antibros.eval.rag import RagPipeline
 from antibros.eval.schemas import Prediction
+from antibros.graph.pipeline import RagPipeline
 from antibros.io import append_jsonl
-from antibros.logging import configure_logging
+from antibros.logging import configure_logging, get_logger
 from antibros.retrieval.base import RetrievalFilters
 from antibros.tracing import record_trace
+
+log = get_logger(__name__)
 
 
 class AskRequest(BaseModel):
@@ -65,11 +67,13 @@ def create_app(
         if engine is None:
             raise HTTPException(status_code=503, detail="RAG pipeline is starting")
         started = time.perf_counter()
-        try:
-            prediction, chunks = engine.ask(request.question, request.filters)
-        except Exception as exc:
-            raise HTTPException(status_code=503, detail=f"RAG unavailable: {exc}") from exc
         trace_id = str(uuid.uuid4())
+        try:
+            result = engine.run(trace_id, request.question, filters=request.filters)
+        except Exception as exc:
+            log.exception("ask_failed", trace_id=trace_id)
+            raise HTTPException(status_code=503, detail="RAG pipeline unavailable") from exc
+        prediction, chunks = result.prediction, result.chunks
         by_chunk = {chunk.chunk_id: chunk for chunk in chunks}
         citations = []
         for citation in prediction.citations:
@@ -90,7 +94,7 @@ def create_app(
                     "url": doc.url,
                     "evidence_level": doc.evidence_level,
                     "evidence_label": _evidence_label(doc.evidence_level),
-                    "snippet": chunk.payload.get("text", "")[:700],
+                    "snippet": str(chunk.payload.get("text", ""))[:700],
                 }
             )
         latency_ms = (time.perf_counter() - started) * 1000
@@ -101,25 +105,30 @@ def create_app(
             "metadata": {
                 "language": prediction.language,
                 "status": prediction.status,
-                "timings": engine.last_trace.get("timings", {}),
-                "retrieved": engine.last_trace.get("retrieved", []),
+                "guard_label": prediction.guard_label,
+                "abstain_reason": prediction.abstain_reason,
+                "llm": {
+                    "calls": prediction.llm_calls,
+                    "cache_hits": prediction.llm_cache_hits,
+                    "prompt_tokens": prediction.prompt_tokens,
+                    "completion_tokens": prediction.completion_tokens,
+                },
+                "spans": prediction.steps,
             },
         }
         try:
             record_trace(cfg.tracing, settings, trace)
         except Exception as exc:
-            if cfg.tracing.backend != "none":
-                # A tracing outage must not discard a usable answer.
-                from antibros.logging import get_logger
-
-                get_logger(__name__).warning("trace_write_failed", error=str(exc))
+            # A tracing outage must not discard a usable answer.
+            log.warning("trace_write_failed", error=str(exc))
         return {
             "answer": prediction.answer,
             "status": prediction.status,
             "language": prediction.language,
             "citations": citations,
             "confidence": _confidence(prediction),
-            "unsupported_claims_removed": engine.last_trace.get("unsupported_claims_removed", 0),
+            "unsupported_claims_removed": prediction.unsupported_claims_removed,
+            "disclaimer": prediction.disclaimer,
             "trace_id": trace_id,
             "latency_ms": round(latency_ms, 2),
             "debug": {
@@ -127,11 +136,12 @@ def create_app(
                     {
                         "chunk_id": c.chunk_id,
                         "score": c.score,
-                        "text": c.payload.get("text", "")[:300],
+                        "rerank_score": c.payload.get("rerank_score"),
+                        "text": str(c.payload.get("text", ""))[:300],
                     }
                     for c in chunks
                 ],
-                "timings": engine.last_trace.get("timings", {}),
+                "steps": prediction.steps,
             },
         }
 

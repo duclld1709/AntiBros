@@ -1,0 +1,6 @@
+# Leave-one-out: full without reranking. The context keeps the same size (top-5 of the
+# RRF ranking), so only the reordering is removed; grade then uses the LLM check alone.
+extends: ../full.yaml
+name: loo_no_rerank
+rerank:
+  enabled: false

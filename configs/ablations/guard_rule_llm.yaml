@@ -1,0 +1,5 @@
+# Guard variant for `antibros eval safety`: rules first, LLM when no rule fires.
+extends: ../full.yaml
+name: guard_rule_llm
+guard:
+  mode: rule_llm

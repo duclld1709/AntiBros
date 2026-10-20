@@ -12,6 +12,7 @@ import typer
 from antibros.config import CHUNKER_NAMES, AppConfig, ChunkerName, load_app_config
 
 if TYPE_CHECKING:
+    from antibros.config import ModelProfile as ModelProfileT
     from antibros.evalset.schemas import AnyItem as AnyItemT
     from antibros.evalset.schemas import SetName as SetNameLit
 from antibros.io import is_valid_run_tag, write_json
@@ -21,7 +22,9 @@ app = typer.Typer(help="AntiBros: evidence-based protein & creatine Q&A.", no_ar
 evalset_app = typer.Typer(help="Build, verify and freeze evaluation sets.", no_args_is_help=True)
 eval_app = typer.Typer(help="Run evaluations (dev split only; test via `eval final`).")
 app.add_typer(evalset_app, name="evalset")
+plan_app = typer.Typer(help="Pre-registered final evaluation plan.", no_args_is_help=True)
 app.add_typer(eval_app, name="eval", no_args_is_help=True)
+app.add_typer(plan_app, name="plan")
 
 
 class Split(StrEnum):
@@ -55,6 +58,7 @@ RunArg = Annotated[Path, typer.Option("--run", help="Experiment run directory.")
 
 
 DEFAULT_CONFIG = Path("configs/base.yaml")
+LAPTOP = Path("configs/models/laptop.yaml")
 
 
 def _load(config: Path) -> AppConfig:
@@ -531,13 +535,14 @@ def eval_retrieval(
     from antibros.indexing.pipeline import chunks_path, read_chunks
     from antibros.indexing.qdrant_store import collection_name, make_client
     from antibros.io import write_jsonl
+    from antibros.reranking.base import make_reranker
     from antibros.retrieval.base import make_retriever
 
     cfg = _load(config)
     name: SetNameLit = "golden" if set_ is SetName.golden else "synth"
     queries = queries_for(_frozen_items(cfg, name), "dev")
     r = cfg.retrieval
-    snapshot = {"app": cfg.model_dump(mode="json"), "config_path": str(config)}
+    snapshot = {"app": cfg.model_dump(mode="json"), "config_path": config.as_posix()}
     meta = {"kind": "retrieval", "eval_set": name, "split": "dev"}
     run_dir = _start_run(cfg, tag or f"retrieval_{name}", meta, snapshot)
     fp = build_fingerprint(
@@ -547,7 +552,10 @@ def eval_retrieval(
         metric_set="retrieval-v1",
         bootstrap_seed=cfg.eval.bootstrap_seed,
         config=snapshot,
-        pipeline={"model": f"{r.mode}:{r.chunker}:{r.embedder}"},
+        pipeline={
+            "model": f"{r.mode}:{r.chunker}:{r.embedder}"
+            + (f"+rerank:{cfg.rerank.model}" if cfg.rerank.enabled else "")
+        },
     )
     write_json(run_dir / "fingerprint.json", fp)
     all_chunks = [
@@ -557,6 +565,7 @@ def eval_retrieval(
     texts = doc_texts(cfg.ingestion.processed_dir)
     client = make_client(cfg.vector_store)
     embedder = make_embedder(r.embedder, cfg.embedders[r.embedder])
+    reranker = make_reranker(cfg.rerank) if cfg.rerank.enabled else None
     try:
         retriever = make_retriever(
             r,
@@ -564,17 +573,22 @@ def eval_retrieval(
             collection_name(cfg.vector_store.collection_prefix, r.chunker, r.embedder),
             embedder,
         )
+
+        def ranked(q: str, k: int) -> list[Any]:
+            # Reranking reorders the retrieved top-k; metrics @5/@10 read the new order.
+            hits = retriever.retrieve(q, k)
+            if reranker is not None:
+                hits = reranker.rerank(q, hits)
+            return [chunk_ref(h.payload) for h in hits]
+
         with timed_phase(run_dir, "retrieval", "retrieval", cfg.eval.budgets_s, len(queries)):
             rows, metrics = run_retrieval_eval(
-                queries,
-                lambda q, k: [chunk_ref(h.payload) for h in retriever.retrieve(q, k)],
-                all_chunks,
-                texts,
-                cfg.eval,
-                r.top_k,
+                queries, ranked, all_chunks, texts, cfg.eval, r.top_k
             )
     finally:
         embedder.close()
+        if reranker is not None:
+            reranker.close()
         client.close()
     write_jsonl(run_dir / "per_item.jsonl", rows)
     write_json(run_dir / "metrics.json", metrics)
@@ -587,10 +601,12 @@ def eval_retrieval(
 @eval_app.command("safety")
 def eval_safety(
     config: ConfigOpt,
+    models: ModelsOpt = LAPTOP,
     split: Split = Split.dev,
     tag: Annotated[str | None, typer.Option(help="Run tag (default: safety_<mode>).")] = None,
 ) -> None:
     """Run only the input guard over the safety set: red-flag recall and FPR."""
+    from antibros.config import load_model_profile
     from antibros.eval.fingerprint import build_fingerprint
     from antibros.eval.runs import timed_phase
     from antibros.eval.safety import aggregate, make_guard, per_item_rows, run_safety
@@ -600,8 +616,14 @@ def eval_safety(
     _dev_only(split)
     cfg = _load(config)
     items = [it for it in _frozen_items(cfg, "safety") if it.split == split.value]
-    guard = make_guard(cfg)
-    snapshot = {"app": cfg.model_dump(mode="json"), "config_path": str(config)}
+    profile = load_model_profile(models)
+    guard = make_guard(cfg, profile)
+    uses_llm = cfg.guard.mode in ("llm", "rule_llm")
+    snapshot = {
+        "app": cfg.model_dump(mode="json"),
+        "models": profile.model_dump(mode="json") if uses_llm else None,
+        "config_path": config.as_posix(),
+    }
     run_dir = _start_run(
         cfg,
         tag or f"safety_{cfg.guard.mode}",
@@ -617,7 +639,12 @@ def eval_safety(
             metric_set="safety-v1",
             bootstrap_seed=cfg.eval.bootstrap_seed,
             config=snapshot,
-            pipeline={"model": cfg.guard.mode},
+            pipeline={
+                "model": f"{cfg.guard.mode}:{profile.pipeline.model}"
+                if uses_llm and profile.pipeline
+                else cfg.guard.mode,
+                "digest": profile.pipeline.digest if uses_llm and profile.pipeline else None,
+            },
         ),
     )
     with timed_phase(run_dir, "safety", f"safety_{split.value}", cfg.eval.budgets_s, len(items)):
@@ -627,6 +654,34 @@ def eval_safety(
     metrics = aggregate(rows, cfg.eval)
     write_json(run_dir / "metrics.json", metrics)
     typer.echo(f"{run_dir}: recall {metrics['red_flag_recall']}, fpr {metrics['fpr']}")
+
+
+def _new_e2e_run(
+    cfg: AppConfig, profile: ModelProfileT, config: Path, tag: str, split: str
+) -> Path:
+    from antibros.eval.fingerprint import build_fingerprint
+
+    snapshot = {
+        "app": cfg.model_dump(mode="json"),
+        "models": profile.model_dump(mode="json"),
+        "config_path": config.as_posix(),
+    }
+    run_dir = _start_run(cfg, tag, {"kind": "e2e", "eval_set": "golden", "split": split}, snapshot)
+    p, j = profile.pipeline, profile.judge
+    write_json(
+        run_dir / "fingerprint.json",
+        build_fingerprint(
+            evalset_dir=cfg.evalset.dir,
+            eval_set="golden",
+            split=split,
+            metric_set="e2e-v1",
+            bootstrap_seed=cfg.eval.bootstrap_seed,
+            config=snapshot,
+            judge=j.model_dump() if j else None,
+            pipeline=p.model_dump() if p else None,
+        ),
+    )
+    return run_dir
 
 
 @eval_app.command("predict")
@@ -640,7 +695,6 @@ def eval_predict(
 ) -> None:
     """Phase 1: run the pipeline on the golden split and store predictions (resumable)."""
     from antibros.config import load_model_profile
-    from antibros.eval.fingerprint import build_fingerprint
     from antibros.eval.predict import make_pipeline, run_predict
     from antibros.eval.runs import timed_phase
     from antibros.evalset.schemas import GoldenItem
@@ -653,7 +707,6 @@ def eval_predict(
     cfg = _load(config)
     profile = load_model_profile(models)
     items = [cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == split.value]
-    pipeline = make_pipeline(cfg, profile)
     if run is not None:
         meta = read_json(run / "run.json")
         if meta.get("split") != split.value or meta.get("kind") != "e2e":
@@ -661,28 +714,8 @@ def eval_predict(
             raise typer.Exit(code=1)
         run_dir = run
     else:
-        snapshot = {
-            "app": cfg.model_dump(mode="json"),
-            "models": profile.model_dump(mode="json"),
-            "config_path": str(config),
-        }
-        run_dir = _start_run(
-            cfg, tag, {"kind": "e2e", "eval_set": "golden", "split": split.value}, snapshot
-        )
-        p, j = profile.pipeline, profile.judge
-        write_json(
-            run_dir / "fingerprint.json",
-            build_fingerprint(
-                evalset_dir=cfg.evalset.dir,
-                eval_set="golden",
-                split=split.value,
-                metric_set="e2e-v1",
-                bootstrap_seed=cfg.eval.bootstrap_seed,
-                config=snapshot,
-                judge=j.model_dump() if j else None,
-                pipeline=p.model_dump() if p else None,
-            ),
-        )
+        run_dir = _new_e2e_run(cfg, profile, config, tag, split.value)
+    pipeline = make_pipeline(cfg, profile)
     try:
         with timed_phase(run_dir, "predict", f"e2e_{split.value}", cfg.eval.budgets_s, len(items)):
             stats = run_predict(items, pipeline, run_dir, limit)
@@ -694,6 +727,84 @@ def eval_predict(
         f"{run_dir}: predicted {stats.predicted} "
         f"(resumed after {stats.done_before}), errors {stats.errors}"
     )
+
+
+class TuneParam(StrEnum):
+    grade_min_rerank_score = "grade_min_rerank_score"
+    verify_max_removed_ratio = "verify_max_removed_ratio"
+
+
+@eval_app.command("tune")
+def eval_tune(
+    config: ConfigOpt,
+    models: ModelsOpt,
+    param: Annotated[TuneParam, typer.Option(help="Threshold to sweep.")],
+    split: Split = Split.dev,
+    out: Annotated[Path | None, typer.Option(help="Also write the table to this file.")] = None,
+) -> None:
+    """Try every pre-declared grid value (`tuning:` in the config) of one threshold on dev.
+
+    Each value is its own run (predict + report, no judge): abstention F1 and the
+    false-abstain rate need no judge. Earlier steps replay from the LLM cache."""
+    from antibros.config import load_model_profile
+    from antibros.eval.predict import run_predict
+    from antibros.eval.runs import timed_phase
+    from antibros.evalset.schemas import GoldenItem
+    from antibros.graph.pipeline import RagPipeline
+    from antibros.io import read_json, write_text
+
+    _dev_only(split)
+    cfg = _load(config)
+    grid = getattr(cfg.tuning, param.value)
+    p = cfg.pipeline
+    needs = {
+        TuneParam.grade_min_rerank_score: p.grade.enabled and cfg.rerank.enabled,
+        TuneParam.verify_max_removed_ratio: p.verify.enabled,
+    }
+    if not grid or not needs[param]:
+        typer.echo(f"{param.value}: empty grid or the step it tunes is disabled", err=True)
+        raise typer.Exit(code=1)
+    profile = load_model_profile(models)
+    items = [cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == split.value]
+    pipeline = RagPipeline(cfg, profile)
+    rows = []
+    try:
+        for value in grid:
+            data = cfg.model_dump(mode="json")
+            if param is TuneParam.grade_min_rerank_score:
+                data["pipeline"]["grade"]["min_rerank_score"] = value
+            else:
+                data["pipeline"]["verify"]["max_removed_ratio"] = value
+            variant = AppConfig.model_validate(data)
+            # Thresholds are read at run time and never change the graph shape, so the
+            # loaded models are reused across grid values.
+            pipeline.cfg = variant
+            tag = f"tune_{param.value}_{str(value).replace('.', 'p')}"
+            run_dir = _new_e2e_run(variant, profile, config, tag, split.value)
+            with timed_phase(
+                run_dir, "predict", f"e2e_{split.value}", cfg.eval.budgets_s, len(items)
+            ):
+                run_predict(items, pipeline, run_dir)
+            eval_report(run_dir)
+            ov = read_json(run_dir / "metrics.json")["overall"]
+            rows.append((value, run_dir, ov["abstention_f1"], ov["false_abstain"]))
+    finally:
+        pipeline.close()
+    lines = [
+        f"# Threshold sweep: `{param.value}` ({split.value}, n={len(items)})",
+        "",
+        "| Value | Abstention F1 | False-abstain rate | Run |",
+        "|---|---|---|---|",
+    ]
+    for value, run_dir, f1, fa in rows:
+        lines.append(
+            f"| {value} | {f1['value']:.3f} [{f1['low']:.3f}, {f1['high']:.3f}] | "
+            f"{fa['value']:.3f} [{fa['low']:.3f}, {fa['high']:.3f}] | `{run_dir.as_posix()}` |"
+        )
+    md = "\n".join(lines) + "\n"
+    if out is not None:
+        write_text(out, md)
+    typer.echo(md)
 
 
 @eval_app.command("judge")
@@ -746,8 +857,11 @@ def eval_report(run: RunArg) -> None:
     from antibros.config import AppConfig
     from antibros.eval.judge import load_judgments
     from antibros.eval.predict import load_predictions
-    from antibros.eval.report import aggregate, per_item_rows
+    from antibros.eval.report import aggregate, per_item_rows, retrieval_metrics
+    from antibros.eval.retrieval_eval import chunk_ref
     from antibros.evalset.schemas import GoldenItem
+    from antibros.evalset.store import doc_texts
+    from antibros.indexing.pipeline import chunks_path, read_chunks
     from antibros.io import read_json, write_jsonl
 
     meta = read_json(run / "run.json")
@@ -757,7 +871,16 @@ def eval_report(run: RunArg) -> None:
     items = [
         cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == meta["split"]
     ]
-    rows = per_item_rows(items, load_predictions(run), load_judgments(run))
+    preds = load_predictions(run)
+    chunks_file = chunks_path(cfg.ingestion.processed_dir, cfg.retrieval.chunker)
+    retrieval = None
+    if chunks_file.exists():
+        chunks = [chunk_ref(c.model_dump()) for c in read_chunks(chunks_file)]
+        texts = doc_texts(cfg.ingestion.processed_dir)
+        retrieval = retrieval_metrics(items, preds, chunks, texts, cfg.eval)
+    else:
+        typer.echo(f"{chunks_file} not found: skipping Evidence Recall@k (run `antibros index`)")
+    rows = per_item_rows(items, preds, load_judgments(run), retrieval)
     write_jsonl(run / "per_item.jsonl", rows)
     metrics = aggregate(rows, cfg.eval)
     write_json(run / "metrics.json", metrics)
@@ -795,6 +918,42 @@ def compare(
     if out is not None:
         write_text(out, md)
     typer.echo(md)
+
+
+@app.command()
+def summarize(
+    runs: Annotated[list[Path], typer.Argument(help="Run directories (same kind).")],
+    out: Annotated[Path | None, typer.Option(help="Also write the tables to this file.")] = None,
+) -> None:
+    """Markdown tables of metrics with 95% CIs for several runs (for reports)."""
+    from antibros.eval.summary import render_summary
+    from antibros.io import write_text
+
+    md = render_summary(runs)
+    if out is not None:
+        write_text(out, md)
+    typer.echo(md)
+
+
+@plan_app.command("lock")
+def plan_lock(
+    guard_run: Annotated[
+        list[Path], typer.Option("--guard-run", help="Dev safety run of each guard variant.")
+    ],
+    plan: Annotated[Path, typer.Option(help="Plan YAML.")] = Path("configs/final_eval_plan.yaml"),
+    config: ConfigOpt = DEFAULT_CONFIG,
+) -> None:
+    """Select the guard by the declared rule and pin config hashes and model digests."""
+    from antibros.eval.plan import PlanError, load_plan, lock_plan, save_plan
+
+    cfg = load_app_config(config)
+    try:
+        locked = lock_plan(load_plan(plan), guard_run, cfg.evalset.dir)
+    except PlanError as e:
+        typer.echo(f"Cannot lock plan: {e}", err=True)
+        raise typer.Exit(code=1) from e
+    save_plan(plan, locked)
+    typer.echo(f"Locked {plan}; selected guard {locked.guard_selection.selected}")
 
 
 @app.command()

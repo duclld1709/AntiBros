@@ -16,6 +16,8 @@ import numpy as np
 from antibros.config import EvalConfig
 from antibros.eval.bootstrap import Indices, bootstrap_mean, bootstrap_stat
 from antibros.eval.metrics.generation import abstention_f1, citation_validity, percentile
+from antibros.eval.relevance import ChunkRef
+from antibros.eval.retrieval_eval import Query, metric_names, score_query
 from antibros.eval.schemas import Judgment, Prediction
 from antibros.evalset.schemas import GoldenItem
 
@@ -37,11 +39,55 @@ MEAN_METRICS = (
     "llm_cache_hits",
     "llm_calls",
     "structured_output_validity",
+    "unsupported_claims_removed",
 )
 
 
+RANKING_NODES = ("retrieve", "rerank")
+
+
+def final_ranking(pred: Prediction) -> list[str] | None:
+    """Chunk IDs of the last ranking the pipeline produced (the reranked list when reranking
+    is on, the last retrieval after a grade retry). ``None`` for M3 predictions without
+    steps, or when retrieval never ran (guard redirect)."""
+    for step in reversed(pred.steps):
+        if step.get("node") in RANKING_NODES:
+            key = "scores" if step["node"] == "rerank" else "hits"
+            return [str(pair[0]) for pair in step.get(key, [])]
+    return None
+
+
+def retrieval_metrics(
+    items: Sequence[GoldenItem],
+    preds: Sequence[Prediction],
+    chunks: Sequence[ChunkRef],
+    texts: dict[str, str],
+    cfg: EvalConfig,
+) -> dict[str, dict[str, float]]:
+    """Span-based retrieval metrics (ADR-0015) of each e2e prediction's final ranking, so an
+    end-to-end run reports Evidence Recall@k for exactly what its pipeline retrieved."""
+    by_id = {c.chunk_id: c for c in chunks}
+    by_item = {it.id: it for it in items}
+    names = metric_names(cfg)
+    out: dict[str, dict[str, float]] = {}
+    for p in preds:
+        it = by_item.get(p.id)
+        ranking = final_ranking(p)
+        if it is None or not it.evidence or ranking is None:
+            continue
+        ranked = [by_id[cid] for cid in ranking if cid in by_id]
+        row = score_query(
+            Query(it.id, it.question, it.language, list(it.evidence)), ranked, chunks, texts, cfg
+        )
+        out[p.id] = {m: row[m] for m in names}
+    return out
+
+
 def per_item_rows(
-    items: Sequence[GoldenItem], preds: Sequence[Prediction], judgments: Sequence[Judgment]
+    items: Sequence[GoldenItem],
+    preds: Sequence[Prediction],
+    judgments: Sequence[Judgment],
+    retrieval: dict[str, dict[str, float]] | None = None,
 ) -> list[dict[str, Any]]:
     by_pred = {p.id: p for p in preds}
     by_judg = {j.id: j for j in judgments}
@@ -52,7 +98,8 @@ def per_item_rows(
             continue
         j = by_judg.get(it.id)
         expected_abstain = it.expected_status == "abstained"
-        predicted_abstain = p.status == "abstained"
+        # A safety redirect on a golden question is a refusal too (counts as abstaining).
+        predicted_abstain = p.status in ("abstained", "safety_redirect")
         answered_both = p.status == "answered" and not expected_abstain
         judge_cost = j.cost_usd if j is not None else None
         row: dict[str, Any] = {
@@ -76,23 +123,27 @@ def per_item_rows(
             else None,
             "llm_cache_hits": float(p.llm_cache_hits),
             "llm_calls": float(p.llm_calls),
+            "unsupported_claims_removed": float(p.unsupported_claims_removed),
             "structured_output_validity": (
                 p.valid_structured_outputs / p.structured_outputs if p.structured_outputs else None
             ),
         }
         for m in JUDGE_METRICS:
             row[m] = getattr(j, m) if (j is not None and answered_both) else None
+        row.update((retrieval or {}).get(it.id, {}))
         rows.append(row)
     return rows
 
 
 def aggregate(rows: Sequence[dict[str, Any]], cfg: EvalConfig) -> dict[str, Any]:
     n_boot, seed, level = cfg.bootstrap_n, cfg.bootstrap_seed, cfg.ci_level
+    ranking_keys = set(metric_names(cfg))
 
     def block(subset: Sequence[dict[str, Any]]) -> dict[str, Any]:
+        ranking = sorted({k for r in subset for k in r if k in ranking_keys})
         out: dict[str, Any] = {
-            m: bootstrap_mean([r[m] for r in subset], n_boot, seed, level).to_dict()
-            for m in MEAN_METRICS
+            m: bootstrap_mean([r.get(m) for r in subset], n_boot, seed, level).to_dict()
+            for m in (*MEAN_METRICS, *ranking)
         }
         exp = np.array([r["expected_abstain"] for r in subset], dtype=bool)
         got = np.array([r["predicted_abstain"] for r in subset], dtype=bool)

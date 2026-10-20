@@ -39,7 +39,7 @@ class FakePipeline:
 def make_pipeline(cfg: AppConfig, models: ModelProfile) -> Pipeline:
     if cfg.pipeline.kind == "fake":
         return FakePipeline()
-    from antibros.eval.rag import RagPipeline
+    from antibros.graph.pipeline import RagPipeline
 
     return RagPipeline(cfg, models)
 

@@ -1,0 +1,5 @@
+# Retrieval axis: bge-m3 dense only. Also the bge-m3 side of the embedding axis.
+extends: retrieval_hybrid.yaml
+name: retrieval_dense
+retrieval:
+  mode: dense

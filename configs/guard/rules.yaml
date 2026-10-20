@@ -1,0 +1,46 @@
+# Rule layer of the guardrails (spec §5.2 steps 1 and 8). Written from the red-flag criteria
+# in evalsets/v1/rubric.md §5, never from evalset questions.
+#
+# Each criterion holds a list of rules; a rule is a list of regexes that must ALL match
+# (conjunction). Text is NFC-normalised and casefolded before matching. Vietnamese patterns
+# keep their diacritics: stripping them would merge words such as "xỉu" (faint) and "xíu"
+# (a little). Unaccented input is left to the LLM layer.
+red_flag:
+  RF_KIDNEY_CHRONIC:
+    - ['suy thận|bệnh thận|thận mãn|chạy thận|lọc máu|ghép thận|sỏi thận|thận yếu']
+    - ['\bckd\b|kidney (disease|failure|transplant|stones?)|renal (disease|failure|insufficiency|impairment)|dialysis|nephropathy']
+    - ['tiểu đường|đái tháo đường|bệnh gan|xơ gan|viêm gan|gan nhiễm mỡ|suy gan|bệnh tim|suy tim|bệnh gút|\bgút\b|cao huyết áp|huyết áp cao']
+    - ['diabet|liver (disease|failure)|cirrhosis|hepatitis|fatty liver|heart (disease|failure|condition)|\bgout\b|hypertension|high blood pressure']
+  RF_MEDICATION:
+    - ['đang (uống|dùng|sử dụng) thuốc|thuốc (lợi tiểu|huyết áp|ức chế miễn dịch|chống đông|kê đơn)|hóa trị|hoá trị|xạ trị']
+    - ['\bon (medication|meds|prescription)|prescribed|taking (medication|meds|pills)|diuretic|blood pressure (meds|medication|pills)|immunosuppress|chemotherapy|\bchemo\b|lithium|cyclosporin|ciclosporin|tacrolimus|warfarin|blood thinner|\bnsaids?\b']
+  RF_PREGNANCY:
+    - ['mang thai|mang bầu|có bầu|đang bầu|bầu bí|cho con bú|sau sinh']
+    - ['pregnan|breastfeed|breast-feed|nursing (mother|my baby)|expecting a baby']
+  RF_MINOR_DOSING:
+    - ['\b(1[0-7]|[5-9]) tuổi']
+    - ['\b(1[0-7]|[5-9]) ?(years?[- ]old|yo|y/o)\b|\bage (1[0-7]|[5-9])\b']
+    - ['con (trai|gái) (em|tôi|mình|tớ)', 'creatine|whey|protein|bột|thực phẩm bổ sung|liều']
+    - ['\bmy (son|daughter|kid|child)\b', 'creatine|whey|protein|supplement|dose|dosage']
+  RF_CARDIAC_SYMPTOMS:
+    - ['đau ngực|tức ngực|thắt ngực|khó thở|ngất|xỉu|choáng váng|tim đập (nhanh|mạnh|loạn)|hồi hộp|đánh trống ngực']
+    - ['chest (pain|tightness|pressure)|short(ness)? of breath|palpitation|heart (racing|pounding)|faint|passed out|pass out|blacked out|black out|lightheaded|light-headed']
+  RF_RHABDO_SIGNS:
+    - ['nước tiểu (màu )?(sẫm|nâu|đỏ|đen|như coca|màu coca|như trà|xá xị)|tiêu cơ vân']
+    - ['(dark|brown|cola|tea)[- ]colou?red (urine|pee)|(dark|brown|black) (urine|pee)|urine (is|was|looks|turned) (dark|brown|black|red)|rhabdo']
+    - ['sưng (cứng|to|phù|vù)|đau (cơ )?dữ dội|đau (không|ko) chịu nổi|yếu (liệt|không nhấc)']
+    - ['(severe|extreme|unbearable|excruciating) (muscle )?(pain|swelling)|swollen (and|&) (hard|stiff)|can.t (straighten|bend|lift) my (arm|leg)']
+  RF_EATING_DISORDER:
+    - ['ép cân|nhịn ăn (cả|nhiều|mấy|\d+) (ngày|bữa)|móc họng|(nôn|ói)( ra)? sau (khi|bữa) ăn|sợ ăn|biếng ăn|cuồng ăn|thuốc nhuận tràng|\bchỉ ăn [1-8]\d{2} ?(kcal|calo)']
+    - ['(throw|throwing|threw) up after|purg|make myself (sick|vomit|throw up)|anorexi|bulimi|starv|laxative|fear of eating|scared to eat|afraid to eat|\b(only|just) (eat|eating|ate) [1-8]\d{2} ?(kcal|cal|calories)\b']
+  RF_PED_DOSING:
+    - ['steroid|\bsarms?\b|prohormone|testosterone|trenbolone|\btren\b|dianabol|anavar|winstrol|ostarine|ligandrol|rad-?140|clenbuterol|insulin|\bhgh\b|growth hormone|hormone tăng trưởng|thuốc lợi tiểu|diuretic',
+       'chu kỳ|chu kì|liều|bao nhiêu (mg|ml|iu)|stack|tiêm|chích|mua ở đâu|nguồn hàng|\bcycle\b|\bdos(e|ing|age)\b|\bpct\b|inject|where (to|can i) (buy|get)|\bsource\b|\bmg\b|\bmcg\b|\biu\b']
+# Output guard: block answers that give dosing for drugs or banned substances.
+output_block:
+  PED_DOSING:
+    - ['steroid|\bsarms?\b|prohormone|testosterone|trenbolone|dianabol|anavar|winstrol|ostarine|ligandrol|rad-?140|clenbuterol|insulin|\bhgh\b|growth hormone|hormone tăng trưởng',
+       '\d+(\.\d+)? ?(mg|mcg|µg|iu|ml)\b']
+  PRESCRIPTION_DOSING:
+    - ['furosemide|hydrochlorothiazide|lithium|cyclosporin|ciclosporin|tacrolimus|warfarin|metformin|ibuprofen|naproxen|lisinopril|thuốc lợi tiểu|diuretic',
+       '\d+(\.\d+)? ?(mg|mcg|µg|ml)\b']

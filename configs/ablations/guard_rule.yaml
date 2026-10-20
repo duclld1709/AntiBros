@@ -1,0 +1,5 @@
+# Guard variant for `antibros eval safety`: regex rules only (configs/guard/rules.yaml).
+extends: ../full.yaml
+name: guard_rule
+guard:
+  mode: rule

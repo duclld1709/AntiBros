@@ -7,7 +7,7 @@ endpoints come from env vars / ``.env`` via :class:`Settings` and are never writ
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
@@ -165,10 +165,57 @@ class EvalConfig(_Strict):
     )
 
 
+class RerankConfig(_Strict):
+    """Cross-encoder reranking of the retrieved top-k (spec §5.2 step 4). ``fake`` is for CI."""
+
+    enabled: bool = False
+    kind: Literal["bge_reranker", "fake"] = "bge_reranker"
+    model: str = "BAAI/bge-reranker-v2-m3"
+    device: Literal["auto", "cuda", "cpu"] = "cuda"  # reports/hardware.md: GPU fits
+    fp16: bool = True
+    batch_size: int = 8
+    max_length: int = 512
+
+
+class QueryRewriteConfig(_Strict):
+    """English query variants that keep technical terms (spec §5.2 step 2)."""
+
+    enabled: bool = False
+    max_variants: int = 2
+    max_tokens: int = 256
+
+
+class GradeConfig(_Strict):
+    """``grade_context``: reranker-score threshold + LLM sufficiency check, one retry, then
+    abstain (spec §5.2 step 5, ADR-0007). The score threshold applies only with reranking on;
+    RRF scores are rank-based and not comparable across queries."""
+
+    enabled: bool = False
+    min_rerank_score: float | None = 0.1
+    use_llm: bool = True
+    max_retries: int = Field(default=1, ge=0, le=1)
+    max_tokens: int = 128
+
+
+class VerifyConfig(_Strict):
+    """``verify_citations``: one batched entailment call over all claims (ADR-0006)."""
+
+    enabled: bool = False
+    max_removed_ratio: float = Field(default=0.5, ge=0, le=1)  # abstain above this share
+    max_tokens: int = 512
+
+
 class PipelineConfig(_Strict):
-    """Which question-answering pipeline ``eval predict`` runs. ``rag`` lands in M3."""
+    """Which question-answering pipeline ``eval predict`` runs, and its toggleable steps.
+    Every step defaults to off, so an M3 config (``baseline.yaml``) keeps its meaning."""
 
     kind: Literal["fake", "rag"] = "rag"
+    context_k: int | None = None  # passages given to generate (top-n after rerank); None = all
+    translate_max_tokens: int = 128
+    generate_max_tokens: int = 512
+    query_rewrite: QueryRewriteConfig = Field(default_factory=QueryRewriteConfig)
+    grade: GradeConfig = Field(default_factory=GradeConfig)
+    verify: VerifyConfig = Field(default_factory=VerifyConfig)
 
 
 class JudgeConfig(_Strict):
@@ -178,10 +225,26 @@ class JudgeConfig(_Strict):
     max_tokens: int = 512
 
 
-class GuardConfig(_Strict):
-    """Input guard used by ``eval safety``. Real modes land in M4."""
+GuardMode = Literal["fake", "rule", "llm", "rule_llm"]
 
-    mode: Literal["fake", "rule", "llm", "rule_llm"] = "rule_llm"
+
+class GuardConfig(_Strict):
+    """Input guard (``eval safety`` and, when ``input_enabled``, the first pipeline node) and
+    output guard. Rule patterns live in ``rules_path``, never in code."""
+
+    mode: GuardMode = "rule_llm"
+    input_enabled: bool = False
+    output_enabled: bool = False
+    rules_path: Path = Path("configs/guard/rules.yaml")
+    llm_max_tokens: int = 128
+
+
+class TuningConfig(_Strict):
+    """Threshold grids declared before tuning on dev (spec §6.4); ``eval tune`` only tries
+    these values."""
+
+    grade_min_rerank_score: list[float] = Field(default_factory=list)
+    verify_max_removed_ratio: list[float] = Field(default_factory=list)
 
 
 class TracingConfig(_Strict):
@@ -202,10 +265,12 @@ class AppConfig(_Strict):
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
     evalset: EvalsetConfig = Field(default_factory=EvalsetConfig)
     eval: EvalConfig = Field(default_factory=EvalConfig)
+    rerank: RerankConfig = Field(default_factory=RerankConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
     guard: GuardConfig = Field(default_factory=GuardConfig)
     tracing: TracingConfig = Field(default_factory=TracingConfig)
+    tuning: TuningConfig = Field(default_factory=TuningConfig)
     prompts_dir: Path = Path("prompts")
     reports_dir: Path = Path("reports")
     log_level: str = "INFO"
@@ -233,8 +298,33 @@ def load_yaml(path: Path) -> dict[str, object]:
     return data
 
 
+def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    out = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = deep_merge(out[key], value)
+        else:
+            out[key] = value
+    return out
+
+
+def resolve_config(path: Path) -> tuple[dict[str, Any], list[Path]]:
+    """Load a config YAML, following ``extends: <path relative to this file>`` chains.
+
+    Returns the merged mapping and the files it came from (child first), so a plan can hash
+    every file that contributes to a config."""
+    data: dict[str, Any] = dict(load_yaml(path))
+    parent = data.pop("extends", None)
+    if parent is None:
+        return data, [path]
+    base, files = resolve_config(path.parent / str(parent))
+    if path in files:
+        raise ValueError(f"circular 'extends' at {path}")
+    return deep_merge(base, data), [path, *files]
+
+
 def load_app_config(path: Path) -> AppConfig:
-    return AppConfig.model_validate(load_yaml(path))
+    return AppConfig.model_validate(resolve_config(path)[0])
 
 
 def load_model_profile(path: Path) -> ModelProfile:

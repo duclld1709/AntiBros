@@ -1,0 +1,23 @@
+# Full pipeline (spec §7.1): baseline retrieval + every M4 step on.
+# Retrieval settings stay at the M1/M2 default (section_aware, bge_m3, hybrid) until the M4
+# retrieval ablation on dev says otherwise; thresholds come from `antibros eval tune` over the
+# grids below. guard.mode must equal the dev-selected guard before `antibros plan lock`.
+extends: baseline.yaml
+name: full
+rerank:
+  enabled: true
+pipeline:
+  context_k: 5            # top-n kept after reranking
+  query_rewrite:
+    enabled: true
+  grade:
+    enabled: true
+  verify:
+    enabled: true
+guard:
+  mode: rule_llm
+  input_enabled: true
+  output_enabled: true
+tuning:
+  grade_min_rerank_score: [0.02, 0.05, 0.1, 0.2, 0.3]
+  verify_max_removed_ratio: [0.25, 0.5, 0.75]

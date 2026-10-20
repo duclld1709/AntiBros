@@ -1,0 +1,7 @@
+# Leave-one-out: full without query rewrite (Vietnamese questions are still translated,
+# as in baseline; a grade_context retry still asks for a reformulation).
+extends: ../full.yaml
+name: loo_no_rewrite
+pipeline:
+  query_rewrite:
+    enabled: false

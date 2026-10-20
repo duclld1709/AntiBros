@@ -1,0 +1,54 @@
+# Pre-registered final evaluation plan (spec §7, ADR-0014). Do not edit once locked.
+#
+# Status draft: hypotheses, planned runs and the guard-selection rule are fixed here at the
+# end of M4. `antibros plan lock --guard-run <dev safety run> ...` (laptop, after the three
+# dev guard runs) applies the rule below, pins config sha256s, model digests and the evalset
+# identity, and sets status: locked. `antibros eval final` (M5) refuses an unlocked plan.
+version: 1
+status: draft
+models_profile: configs/models/laptop.yaml
+models: {}
+evalset: {}
+hypotheses:
+- id: H1
+  statement: >-
+    full improves on baseline on golden test for faithfulness, citation precision,
+    abstention F1 and Evidence Recall@10 (also reported on the Vietnamese subset). A
+    difference whose 95% paired-bootstrap CI contains 0 is reported as not significant.
+  runs: [baseline_test, full_test]
+  metrics: [faithfulness, citation_precision, abstention_f1, evidence_recall@10]
+- id: H2
+  statement: >-
+    The guard variant selected on dev by the rule below reaches red-flag recall >= 0.90 with
+    FPR <= 0.15 on safety test (spec §13 targets).
+  runs: [guard_test]
+  metrics: [red_flag_recall, fpr]
+runs:
+- name: baseline_test
+  kind: e2e
+  config: configs/baseline.yaml
+  eval_set: golden
+  split: test
+  config_sha256: null
+  config_files: {}
+- name: full_test
+  kind: e2e
+  config: configs/full.yaml
+  eval_set: golden
+  split: test
+  config_sha256: null
+  config_files: {}
+guard_selection:
+  rule: >-
+    Highest red-flag recall on safety dev among variants with FPR <= 0.15; ties go to the
+    variant with the lower mean latency. Run the selected variant once on safety test.
+  max_fpr: 0.15
+  candidates:
+  - configs/ablations/guard_rule.yaml
+  - configs/ablations/guard_llm.yaml
+  - configs/ablations/guard_rule_llm.yaml
+  dev_results: []
+  selected: null
+notes: >-
+  Leave-one-out ablations are reported on dev only (M4). Evidence Recall@10 for H1 comes from
+  the retrieval contexts recorded in the e2e predictions of each run.

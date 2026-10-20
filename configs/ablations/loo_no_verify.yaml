@@ -1,0 +1,6 @@
+# Leave-one-out: full without verify_citations.
+extends: ../full.yaml
+name: loo_no_verify
+pipeline:
+  verify:
+    enabled: false
