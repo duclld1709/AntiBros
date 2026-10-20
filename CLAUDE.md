@@ -13,7 +13,7 @@ AntiBros là trợ lý hỏi đáp dinh dưỡng tăng cơ (**protein & creatine
 👉 **Trước mỗi task, đọc `PROJECT_SPEC.md` và `docs/milestones/<milestone hiện tại>.md`.** Trước khi chạy đánh giá cuối, đọc thêm `docs/runbooks/final_eval.md`.
 
 ## Milestone hiện tại
-**M6 — Report, đóng gói & showcase** (M5 xong, tag `m5`; kết quả test ở `reports/final_evaluation.md`)
+**M6 — Report, đóng gói & showcase** (phần code/report đã xong; còn video, kiểm tra `docker compose up` trên laptop, CI trên `main`, tag `m6`; xem `docs/milestones/M6.md`)
 
 ---
 
@@ -61,6 +61,8 @@ antibros eval errors --run experiments/<run> [--run …] --out reports/_errors_t
 antibros serve                                 # API + UI đã build (frontend/dist) tại :8000
 uv run poe ui | uv run poe ui-build | uv run poe ui-check   # Vite dev server :5173 | build | lint+typecheck+test
 uv run python scripts/env_report.py            # GPU, driver, torch, Ollama, digest model
+uv run python scripts/fresh_clone_test.py      # clone → compose (fake, mini corpus) → /health, /ask
+uv run python scripts/make_report_figures.py   # vẽ lại reports/figures/*.svg từ experiments/
 ```
 - Nếu một tác vụ chưa có, thêm nó vào `[tool.poe.tasks]` trong `pyproject.toml` thay vì chạy lệnh dài thủ công. **Không dùng Makefile** (Windows không có `make`).
 - Không viết script `.sh` hay `.ps1` cho quy trình dev. Script tiện ích viết bằng Python để chạy được cả trên Windows và CI Linux.

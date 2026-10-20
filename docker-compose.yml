@@ -1,3 +1,25 @@
+# One command (spec §10.3):  Copy-Item .env.example .env ; docker compose up
+# qdrant -> init (ingest + index, once) -> api (API + web UI on http://localhost:8000).
+# On Windows the api calls native Ollama via host.docker.internal. On Linux without a native
+# Ollama: `docker compose --profile ollama up` with LLM_BASE_URL_DOCKER=http://ollama:11434/v1.
+x-app: &app
+  image: antibros-api:local
+  build:
+    context: .
+    dockerfile: docker/Dockerfile.api
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    QDRANT_URL: http://qdrant:6333
+    LLM_BASE_URL: ${LLM_BASE_URL_DOCKER:-http://host.docker.internal:11434/v1}
+    HF_HOME: /models
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - app_data:/app/data
+    - models:/models
+
 services:
   qdrant:
     image: qdrant/qdrant:v1.15.5
@@ -14,5 +36,48 @@ services:
       retries: 20
       start_period: 5s
 
+  init:
+    <<: *app
+    # Downloads the 12 articles from Europe PMC (sha256-checked) and indexes what the served
+    # config retrieves with. Re-running re-uses data/raw and upserts by chunk ID.
+    command:
+      - sh
+      - -c
+      - antibros ingest --config ${ANTIBROS_CONFIG:-configs/docker.yaml} && antibros index --config ${ANTIBROS_CONFIG:-configs/docker.yaml}
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    command:
+      - antibros
+      - serve
+      - --host
+      - 0.0.0.0
+      - --config
+      - ${ANTIBROS_CONFIG:-configs/docker.yaml}
+      - --models
+      - ${ANTIBROS_MODELS:-configs/models/laptop.yaml}
+    ports:
+      - "8000:8000"
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+
+  ollama:
+    image: ollama/ollama:0.40.6
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
 volumes:
   qdrant_data:
+  app_data:
+  models:
+  ollama:

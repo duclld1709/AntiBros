@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 778 250" width="778" height="250" role="img" aria-label="Final test: paired differences full minus baseline with 95% CIs">
+<title>Final test: paired differences full minus baseline with 95% CIs</title>
+
+<style>
+  .surface { fill: #fcfcfb; }
+  .ink { fill: #0b0b0b; font: 600 13px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .label { fill: #0b0b0b; font: 12px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .muted { fill: #52514e; font: 11px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .grid { stroke: #e4e3df; stroke-width: 1; }
+  .zero { stroke: #8a8984; stroke-width: 1; stroke-dasharray: 3 3; }
+  .ci { stroke: #2a78d6; stroke-width: 2; stroke-linecap: round; }
+  .dot { fill: #2a78d6; stroke: #fcfcfb; stroke-width: 2; }
+  .hollow { fill: #fcfcfb; stroke: #2a78d6; stroke-width: 2; }
+  @media (prefers-color-scheme: dark) {
+    .surface { fill: #1a1a19; }
+    .ink, .label { fill: #f0efec; }
+    .muted { fill: #c3c2b7; }
+    .grid { stroke: #34342f; }
+    .zero { stroke: #8f8e86; }
+    .ci { stroke: #3987e5; }
+    .dot { fill: #3987e5; stroke: #1a1a19; }
+    .hollow { fill: #1a1a19; stroke: #3987e5; }
+  }
+</style>
+
+<rect class="surface" x="0" y="0" width="778" height="250" rx="8"/>
+<text class="ink" x="14" y="32">full - baseline on golden test (H1)</text>
+<line class="grid" x1="244.0" y1="44" x2="244.0" y2="200"/>
+<text class="muted" x="244.0" y="216" text-anchor="middle">-0.4</text>
+<line class="grid" x1="326.5" y1="44" x2="326.5" y2="200"/>
+<text class="muted" x="326.5" y="216" text-anchor="middle">-0.2</text>
+<line class="grid" x1="409.0" y1="44" x2="409.0" y2="200"/>
+<text class="muted" x="409.0" y="216" text-anchor="middle">0</text>
+<line class="grid" x1="491.5" y1="44" x2="491.5" y2="200"/>
+<text class="muted" x="491.5" y="216" text-anchor="middle">0.2</text>
+<line class="grid" x1="574.0" y1="44" x2="574.0" y2="200"/>
+<text class="muted" x="574.0" y="216" text-anchor="middle">0.4</text>
+<line class="zero" x1="409.0" y1="40" x2="409.0" y2="200"/>
+<g><title>faithfulness: -0.017 [-0.050, 0.000] (n = 3)</title>
+<text class="label" x="14" y="61.0">faithfulness</text>
+<line class="ci" x1="388.4" y1="57.0" x2="409.0" y2="57.0"/>
+<circle class="hollow" cx="402.1" cy="57.0" r="5"/>
+<text class="muted" x="586" y="61.0">-0.017 [-0.050, 0.000] n = 3</text>
+</g>
+<g><title>citation precision: -0.017 [-0.050, 0.000] (n = 3)</title>
+<text class="label" x="14" y="87.0">citation precision</text>
+<line class="ci" x1="388.4" y1="83.0" x2="409.0" y2="83.0"/>
+<circle class="hollow" cx="402.1" cy="83.0" r="5"/>
+<text class="muted" x="586" y="87.0">-0.017 [-0.050, 0.000] n = 3</text>
+</g>
+<g><title>abstention F1: 0.038 [-0.074, 0.177] (n = 30)</title>
+<text class="label" x="14" y="113.0">abstention F1</text>
+<line class="ci" x1="378.3" y1="109.0" x2="482.2" y2="109.0"/>
+<circle class="hollow" cx="424.6" cy="109.0" r="5"/>
+<text class="muted" x="586" y="113.0">0.038 [-0.074, 0.177] n = 30</text>
+</g>
+<g><title>Evidence Recall@10: 0.005 [-0.078, 0.099] (n = 21)</title>
+<text class="label" x="14" y="139.0">Evidence Recall@10</text>
+<line class="ci" x1="376.7" y1="135.0" x2="449.8" y2="135.0"/>
+<circle class="hollow" cx="410.9" cy="135.0" r="5"/>
+<text class="muted" x="586" y="139.0">0.005 [-0.078, 0.099] n = 21</text>
+</g>
+<g><title>Evidence Recall@10, Vietnamese: -0.072 [-0.163, 0.028] (n = 12)</title>
+<text class="label" x="14" y="165.0">Evidence Recall@10, Vietnamese</text>
+<line class="ci" x1="342.0" y1="161.0" x2="420.5" y2="161.0"/>
+<circle class="hollow" cx="379.4" cy="161.0" r="5"/>
+<text class="muted" x="586" y="165.0">-0.072 [-0.163, 0.028] n = 12</text>
+</g>
+<g><title>false-abstain rate: 0.043 [-0.174, 0.261] (n = 23)</title>
+<text class="label" x="14" y="191.0">false-abstain rate</text>
+<line class="ci" x1="337.3" y1="187.0" x2="516.6" y2="187.0"/>
+<circle class="hollow" cx="426.9" cy="187.0" r="5"/>
+<text class="muted" x="586" y="191.0">0.043 [-0.174, 0.261] n = 23</text>
+</g>
+</svg>

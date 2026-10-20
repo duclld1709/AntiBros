@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1.7
+# AntiBros API + web UI in one Linux image (spec §10.3, ADR-0022). Multi-stage, non-root.
+# Contains no model weights (downloaded at runtime into the /models volume) and no secrets.
+
+# --- 1. web UI (React + Vite) -----------------------------------------------------------
+FROM node:22-bookworm-slim AS ui
+WORKDIR /ui
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build
+
+# --- 2. Python environment (uv, locked; Linux resolves the CPU torch wheel) ---------------
+FROM python:3.11-slim-bookworm AS build
+COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /usr/local/bin/uv
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --locked --no-dev --no-install-project
+COPY src ./src
+RUN uv sync --locked --no-dev --no-editable
+
+# --- 3. runtime ------------------------------------------------------------------------
+FROM python:3.11-slim-bookworm
+RUN useradd --create-home --uid 10001 antibros
+WORKDIR /app
+COPY --from=build /app/.venv /app/.venv
+COPY configs ./configs
+COPY prompts ./prompts
+COPY evalsets ./evalsets
+COPY tests/fixtures/mini_corpus ./tests/fixtures/mini_corpus
+COPY --from=ui /ui/dist ./frontend/dist
+RUN mkdir -p /app/data /app/experiments /models \
+    && chown -R antibros:antibros /app/data /app/experiments /models
+ENV PATH=/app/.venv/bin:$PATH \
+    HF_HOME=/models \
+    PYTHONUNBUFFERED=1 \
+    QDRANT_URL=http://qdrant:6333
+USER antibros
+EXPOSE 8000
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=12 \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+CMD ["antibros", "serve", "--host", "0.0.0.0", "--config", "configs/docker.yaml", "--models", "configs/models/laptop.yaml"]

@@ -158,7 +158,7 @@ Không thuê GPU. Quyết định này giới hạn kích thước model và cor
   - Dự phòng không cần Docker: `vector_store.mode: local` (qdrant-client embedded, lưu trên đĩa). Ở M0 phải xác minh chế độ này hỗ trợ sparse vector.
   - Unit test dùng `QdrantClient(":memory:")`.
 - **Driver NVIDIA:** trong NVIDIA Control Panel, đặt *CUDA – Sysmem Fallback Policy* = *Prefer No Sysmem Fallback* cho Python và Ollama. Nếu không, khi thiếu VRAM driver trên Windows có thể âm thầm tràn sang RAM hệ thống, làm eval chậm đi nhiều lần thay vì báo OOM. Ở M0 cần xác minh setting này có trên driver đang dùng.
-- Script tiện ích (`env_report`, `vram_probe`, `fresh_clone_test`) viết bằng **Python**, nên chạy giống nhau trên Windows và CI Linux. Ngoại lệ duy nhất là script chạy bên trong container Linux (`docker/init.sh`).
+- Script tiện ích (`env_report`, `vram_probe`, `fresh_clone_test`) viết bằng **Python**, nên chạy giống nhau trên Windows và CI Linux. Lệnh khởi tạo chạy bên trong container Linux được khai báo thẳng trong `docker-compose.yml` (`sh -c "antibros ingest && antibros index"`), không cần script riêng.
 - Embedding và reranker chạy bằng PyTorch **FP16** trên GPU. Nếu thiếu VRAM thì cho reranker chạy trên CPU (tùy chọn `device` trong config).
 - Các model có chế độ "thinking" phải **tắt thinking**. Temperature = 0. Structured output dùng JSON schema.
 
@@ -517,7 +517,7 @@ Chi tiết vận hành nằm ở `docs/runbooks/final_eval.md`. Cấu hình máy
 | `test` | pytest trên **`windows-latest` và `ubuntu-latest`**, bỏ qua integration, dùng provider `fake` và Qdrant `:memory:` |
 | `frontend` | ESLint, `tsc`, Vitest (API được mock) và `vite build` cho `frontend/` |
 | `evalset-verify` | Kiểm tra checksum của evalset + `evalset leakcheck`, trên cả Windows và Linux (bắt lỗi CRLF) |
-| `docker-build` | Build image API và UI |
+| `docker-build` | Build image API (đã gồm web UI, ADR-0022) và báo kích thước |
 | `compose-smoke` | Mini corpus (3 bài CC BY, đã chunk sẵn) + embedder/LLM `fake`; gọi `/health` và 1 câu `/ask` |
 
 CI không tải model nặng và không gọi API thật. `main` phải luôn xanh.
@@ -550,7 +550,7 @@ docker compose up
 antibros/
 ├── CLAUDE.md · PROJECT_SPEC.md · README.md
 ├── pyproject.toml (gồm [tool.poe.tasks]) · uv.lock · .env.example · .pre-commit-config.yaml · .gitattributes
-├── docker-compose.yml · docker/                # Dockerfile.api, Dockerfile.ui, init.sh (chạy trong container Linux)
+├── docker-compose.yml · docker-compose.smoke.yml · docker/Dockerfile.api   # một image: API + web UI (ADR-0022)
 ├── .github/workflows/ci.yml
 ├── configs/
 │   ├── base.yaml · baseline.yaml · full.yaml
@@ -627,6 +627,12 @@ antibros serve
 - Sau khi đã hiểu rõ kiến thức, chủ dự án **tự code và tự kiểm chứng** trên corpus và evalset toàn diện hơn (`evalsets/v2`): nhiều mảng hơn (tập kháng lực, giảm mỡ, caffeine…) và nhiều bài hơn.
 - v2 là một evalset mới. Kết quả v1 và v2 **không so sánh trực tiếp** với nhau.
 - Các hướng khác: có người review một mẫu evalset, host website với API provider, streaming response.
+- Ưu tiên cho v2, rút ra từ kết quả test của v1 (`reports/error_analysis.md`):
+  - xử lý JSON hỏng từ generator (đặt output budget theo context, retry có giới hạn);
+  - hiệu chỉnh `grade_context` trên tập dev lớn hơn;
+  - rerank theo câu hỏi đã viết lại bằng tiếng Anh;
+  - thu hẹp tiêu chí của LLM guard;
+  - plan pin thêm hash của `prompts/` và rule guard.
 
 ---
 

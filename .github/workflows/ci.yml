@@ -73,3 +73,24 @@ jobs:
       - run: uv sync --locked
       - run: uv run antibros evalset verify
       - run: uv run antibros evalset leakcheck
+
+  docker-build:
+    # The one image of `docker compose up` (API + web UI). Reports its size (M6: ~3 GB budget).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f docker/Dockerfile.api -t antibros-api:local .
+      - name: Image size
+        run: |
+          docker image inspect antibros-api:local --format '{{.Size}}' \
+            | awk '{printf "antibros-api:local %.2f GB\n", $1/1e9}' | tee -a "$GITHUB_STEP_SUMMARY"
+
+  compose-smoke:
+    # Fresh clone -> compose with fake providers + CC BY mini corpus -> /health + /ask.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python scripts/fresh_clone_test.py --repo . --ref ${{ github.sha }}

@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 778 708" width="778" height="708" role="img" aria-label="Leave-one-out on dev: paired differences to full with 95% CIs">
+<title>Leave-one-out on dev: paired differences to full with 95% CIs</title>
+
+<style>
+  .surface { fill: #fcfcfb; }
+  .ink { fill: #0b0b0b; font: 600 13px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .label { fill: #0b0b0b; font: 12px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .muted { fill: #52514e; font: 11px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .grid { stroke: #e4e3df; stroke-width: 1; }
+  .zero { stroke: #8a8984; stroke-width: 1; stroke-dasharray: 3 3; }
+  .ci { stroke: #2a78d6; stroke-width: 2; stroke-linecap: round; }
+  .dot { fill: #2a78d6; stroke: #fcfcfb; stroke-width: 2; }
+  .hollow { fill: #fcfcfb; stroke: #2a78d6; stroke-width: 2; }
+  @media (prefers-color-scheme: dark) {
+    .surface { fill: #1a1a19; }
+    .ink, .label { fill: #f0efec; }
+    .muted { fill: #c3c2b7; }
+    .grid { stroke: #34342f; }
+    .zero { stroke: #8f8e86; }
+    .ci { stroke: #3987e5; }
+    .dot { fill: #3987e5; stroke: #1a1a19; }
+    .hollow { fill: #1a1a19; stroke: #3987e5; }
+  }
+</style>
+
+<rect class="surface" x="0" y="0" width="778" height="708" rx="8"/>
+<text class="ink" x="14" y="32">evidence_recall@10: variant - full (dev)</text>
+<line class="grid" x1="277.0" y1="44" x2="277.0" y2="148"/>
+<text class="muted" x="277.0" y="164" text-anchor="middle">-0.4</text>
+<line class="grid" x1="343.0" y1="44" x2="343.0" y2="148"/>
+<text class="muted" x="343.0" y="164" text-anchor="middle">-0.2</text>
+<line class="grid" x1="409.0" y1="44" x2="409.0" y2="148"/>
+<text class="muted" x="409.0" y="164" text-anchor="middle">0</text>
+<line class="grid" x1="475.0" y1="44" x2="475.0" y2="148"/>
+<text class="muted" x="475.0" y="164" text-anchor="middle">0.2</text>
+<line class="grid" x1="541.0" y1="44" x2="541.0" y2="148"/>
+<text class="muted" x="541.0" y="164" text-anchor="middle">0.4</text>
+<line class="zero" x1="409.0" y1="40" x2="409.0" y2="148"/>
+<g><title>without reranker: -0.195 [-0.330, -0.070] (n = 12)</title>
+<text class="label" x="14" y="61.0">without reranker</text>
+<line class="ci" x1="300.0" y1="57.0" x2="385.8" y2="57.0"/>
+<circle class="dot" cx="344.6" cy="57.0" r="5"/>
+<text class="muted" x="586" y="61.0">-0.195 [-0.330, -0.070] n = 12</text>
+</g>
+<g><title>without query rewrite: -0.009 [-0.051, 0.032] (n = 12)</title>
+<text class="label" x="14" y="87.0">without query rewrite</text>
+<line class="ci" x1="392.2" y1="83.0" x2="419.7" y2="83.0"/>
+<circle class="hollow" cx="405.9" cy="83.0" r="5"/>
+<text class="muted" x="586" y="87.0">-0.009 [-0.051, 0.032] n = 12</text>
+</g>
+<g><title>without grade_context: 0.000 [0.000, 0.000] (n = 12)</title>
+<text class="label" x="14" y="113.0">without grade_context</text>
+<line class="ci" x1="409.0" y1="109.0" x2="409.0" y2="109.0"/>
+<circle class="hollow" cx="409.0" cy="109.0" r="5"/>
+<text class="muted" x="586" y="113.0">0.000 [0.000, 0.000] n = 12</text>
+</g>
+<g><title>without verify_citations: 0.000 [0.000, 0.000] (n = 12)</title>
+<text class="label" x="14" y="139.0">without verify_citations</text>
+<line class="ci" x1="409.0" y1="135.0" x2="409.0" y2="135.0"/>
+<circle class="hollow" cx="409.0" cy="135.0" r="5"/>
+<text class="muted" x="586" y="139.0">0.000 [0.000, 0.000] n = 12</text>
+</g>
+<text class="ink" x="14" y="202">faithfulness: variant - full (dev)</text>
+<line class="grid" x1="277.0" y1="214" x2="277.0" y2="318"/>
+<text class="muted" x="277.0" y="334" text-anchor="middle">-0.4</text>
+<line class="grid" x1="343.0" y1="214" x2="343.0" y2="318"/>
+<text class="muted" x="343.0" y="334" text-anchor="middle">-0.2</text>
+<line class="grid" x1="409.0" y1="214" x2="409.0" y2="318"/>
+<text class="muted" x="409.0" y="334" text-anchor="middle">0</text>
+<line class="grid" x1="475.0" y1="214" x2="475.0" y2="318"/>
+<text class="muted" x="475.0" y="334" text-anchor="middle">0.2</text>
+<line class="grid" x1="541.0" y1="214" x2="541.0" y2="318"/>
+<text class="muted" x="541.0" y="334" text-anchor="middle">0.4</text>
+<line class="zero" x1="409.0" y1="210" x2="409.0" y2="318"/>
+<g><title>without reranker: -0.042 [-0.092, -0.008] (n = 6)</title>
+<text class="label" x="14" y="231.0">without reranker</text>
+<line class="ci" x1="378.7" y1="227.0" x2="406.3" y2="227.0"/>
+<circle class="dot" cx="395.2" cy="227.0" r="5"/>
+<text class="muted" x="586" y="231.0">-0.042 [-0.092, -0.008] n = 6</text>
+</g>
+<g><title>without query rewrite: 0.000 [0.000, 0.000] (n = 7)</title>
+<text class="label" x="14" y="257.0">without query rewrite</text>
+<line class="ci" x1="409.0" y1="253.0" x2="409.0" y2="253.0"/>
+<circle class="hollow" cx="409.0" cy="253.0" r="5"/>
+<text class="muted" x="586" y="257.0">0.000 [0.000, 0.000] n = 7</text>
+</g>
+<g><title>without grade_context: 0.000 [0.000, 0.000] (n = 7)</title>
+<text class="label" x="14" y="283.0">without grade_context</text>
+<line class="ci" x1="409.0" y1="279.0" x2="409.0" y2="279.0"/>
+<circle class="hollow" cx="409.0" cy="279.0" r="5"/>
+<text class="muted" x="586" y="283.0">0.000 [0.000, 0.000] n = 7</text>
+</g>
+<g><title>without verify_citations: 0.000 [0.000, 0.000] (n = 7)</title>
+<text class="label" x="14" y="309.0">without verify_citations</text>
+<line class="ci" x1="409.0" y1="305.0" x2="409.0" y2="305.0"/>
+<circle class="hollow" cx="409.0" cy="305.0" r="5"/>
+<text class="muted" x="586" y="309.0">0.000 [0.000, 0.000] n = 7</text>
+</g>
+<text class="ink" x="14" y="372">abstention_f1: variant - full (dev)</text>
+<line class="grid" x1="271.5" y1="384" x2="271.5" y2="488"/>
+<text class="muted" x="271.5" y="504" text-anchor="middle">-0.5</text>
+<line class="grid" x1="340.2" y1="384" x2="340.2" y2="488"/>
+<text class="muted" x="340.2" y="504" text-anchor="middle">-0.25</text>
+<line class="grid" x1="409.0" y1="384" x2="409.0" y2="488"/>
+<text class="muted" x="409.0" y="504" text-anchor="middle">0</text>
+<line class="grid" x1="477.8" y1="384" x2="477.8" y2="488"/>
+<text class="muted" x="477.8" y="504" text-anchor="middle">0.25</text>
+<line class="grid" x1="546.5" y1="384" x2="546.5" y2="488"/>
+<text class="muted" x="546.5" y="504" text-anchor="middle">0.5</text>
+<line class="zero" x1="409.0" y1="380" x2="409.0" y2="488"/>
+<g><title>without reranker: -0.044 [-0.167, 0.000] (n = 16)</title>
+<text class="label" x="14" y="401.0">without reranker</text>
+<line class="ci" x1="363.2" y1="397.0" x2="409.0" y2="397.0"/>
+<circle class="hollow" cx="396.9" cy="397.0" r="5"/>
+<text class="muted" x="586" y="401.0">-0.044 [-0.167, 0.000] n = 16</text>
+</g>
+<g><title>without query rewrite: 0.000 [0.000, 0.000] (n = 16)</title>
+<text class="label" x="14" y="427.0">without query rewrite</text>
+<line class="ci" x1="409.0" y1="423.0" x2="409.0" y2="423.0"/>
+<circle class="hollow" cx="409.0" cy="423.0" r="5"/>
+<text class="muted" x="586" y="427.0">0.000 [0.000, 0.000] n = 16</text>
+</g>
+<g><title>without grade_context: 0.112 [0.000, 0.292] (n = 16)</title>
+<text class="label" x="14" y="453.0">without grade_context</text>
+<line class="ci" x1="409.0" y1="449.0" x2="489.3" y2="449.0"/>
+<circle class="hollow" cx="439.8" cy="449.0" r="5"/>
+<text class="muted" x="586" y="453.0">0.112 [0.000, 0.292] n = 16</text>
+</g>
+<g><title>without verify_citations: 0.000 [0.000, 0.000] (n = 16)</title>
+<text class="label" x="14" y="479.0">without verify_citations</text>
+<line class="ci" x1="409.0" y1="475.0" x2="409.0" y2="475.0"/>
+<circle class="hollow" cx="409.0" cy="475.0" r="5"/>
+<text class="muted" x="586" y="479.0">0.000 [0.000, 0.000] n = 16</text>
+</g>
+<text class="ink" x="14" y="542">false_abstain: variant - full (dev)</text>
+<line class="grid" x1="271.5" y1="554" x2="271.5" y2="658"/>
+<text class="muted" x="271.5" y="674" text-anchor="middle">-0.5</text>
+<line class="grid" x1="340.2" y1="554" x2="340.2" y2="658"/>
+<text class="muted" x="340.2" y="674" text-anchor="middle">-0.25</text>
+<line class="grid" x1="409.0" y1="554" x2="409.0" y2="658"/>
+<text class="muted" x="409.0" y="674" text-anchor="middle">0</text>
+<line class="grid" x1="477.8" y1="554" x2="477.8" y2="658"/>
+<text class="muted" x="477.8" y="674" text-anchor="middle">0.25</text>
+<line class="grid" x1="546.5" y1="554" x2="546.5" y2="658"/>
+<text class="muted" x="546.5" y="674" text-anchor="middle">0.5</text>
+<line class="zero" x1="409.0" y1="550" x2="409.0" y2="658"/>
+<g><title>without reranker: 0.083 [0.000, 0.250] (n = 12)</title>
+<text class="label" x="14" y="571.0">without reranker</text>
+<line class="ci" x1="409.0" y1="567.0" x2="477.8" y2="567.0"/>
+<circle class="hollow" cx="431.9" cy="567.0" r="5"/>
+<text class="muted" x="586" y="571.0">0.083 [0.000, 0.250] n = 12</text>
+</g>
+<g><title>without query rewrite: 0.000 [0.000, 0.000] (n = 12)</title>
+<text class="label" x="14" y="597.0">without query rewrite</text>
+<line class="ci" x1="409.0" y1="593.0" x2="409.0" y2="593.0"/>
+<circle class="hollow" cx="409.0" cy="593.0" r="5"/>
+<text class="muted" x="586" y="597.0">0.000 [0.000, 0.000] n = 12</text>
+</g>
+<g><title>without grade_context: -0.167 [-0.417, 0.000] (n = 12)</title>
+<text class="label" x="14" y="623.0">without grade_context</text>
+<line class="ci" x1="294.4" y1="619.0" x2="409.0" y2="619.0"/>
+<circle class="hollow" cx="363.2" cy="619.0" r="5"/>
+<text class="muted" x="586" y="623.0">-0.167 [-0.417, 0.000] n = 12</text>
+</g>
+<g><title>without verify_citations: 0.000 [0.000, 0.000] (n = 12)</title>
+<text class="label" x="14" y="649.0">without verify_citations</text>
+<line class="ci" x1="409.0" y1="645.0" x2="409.0" y2="645.0"/>
+<circle class="hollow" cx="409.0" cy="645.0" r="5"/>
+<text class="muted" x="586" y="649.0">0.000 [0.000, 0.000] n = 12</text>
+</g>
+</svg>

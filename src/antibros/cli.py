@@ -94,13 +94,35 @@ def ingest(
     manifest: Annotated[Path | None, typer.Option(help="Corpus manifest JSONL.")] = None,
     config: ConfigOpt = DEFAULT_CONFIG,
     offline: Annotated[bool, typer.Option(help="Use cached data/raw only.")] = False,
+    from_jsonl: Annotated[
+        Path | None,
+        typer.Option(help="Load already parsed documents (e.g. the CI mini corpus) instead."),
+    ] = None,
 ) -> None:
     """Download and parse the corpus listed in the manifest (verifies sha256)."""
     from antibros.ingestion.europepmc import EuropePMCClient
-    from antibros.ingestion.pipeline import IngestError
+    from antibros.ingestion.pipeline import IngestError, docs_dir
     from antibros.ingestion.pipeline import ingest as run_ingest
 
     cfg = _load(config)
+    if from_jsonl is not None:
+        from antibros.ingestion.schemas import Document
+        from antibros.io import read_text
+
+        docs = [
+            Document.model_validate_json(line)
+            for line in read_text(from_jsonl).splitlines()
+            if line
+        ]
+        for doc in docs:
+            write_json(
+                docs_dir(cfg.ingestion.processed_dir) / f"{doc.doc_id}.json",
+                doc.model_dump(mode="json"),
+            )
+        typer.echo(
+            f"Loaded {len(docs)} documents from {from_jsonl} into {cfg.ingestion.processed_dir}"
+        )
+        return
     client = None if offline else EuropePMCClient(cfg.ingestion.europepmc)
     try:
         docs = run_ingest(

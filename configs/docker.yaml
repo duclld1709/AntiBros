@@ -1,0 +1,15 @@
+# `docker compose up` (spec §10.3): the `full` pipeline, adapted to the Linux containers.
+# Not an evaluation config (the locked plan pins full.yaml, not this file).
+extends: full.yaml
+name: docker
+vector_store:
+  mode: server            # the compose `qdrant` service (QDRANT_URL)
+rerank:
+  device: auto            # containers use CPU torch unless Docker has NVIDIA GPU support
+index:
+  chunkers: [section_aware]
+  embedders: [e5_large]   # what full.yaml retrieves with
+reports_dir: data/reports # writable volume (feedback.jsonl)
+tracing:
+  backend: jsonl
+  path: data/traces.jsonl
