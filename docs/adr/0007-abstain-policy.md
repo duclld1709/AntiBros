@@ -55,6 +55,18 @@ the two cache replays took 5.44 s and 5.45 s; all were below the 600 s budget. S
 `experiments/20261020-1533_tune_verify_max_removed_ratio_0p75/`. Previous partial/completed
 RTX 3050 runs were preserved and excluded from this V100 grid comparison.
 
+## Test evidence (M5)
+On golden test, the false-abstain rate was 0.739 for `full` and 0.696 for `baseline` (23
+answerable/myth items; `reports/final_evaluation.md`). The *Revisit if* condition below
+(~15%) is met.
+- In `full`, `grade_context` caused 7 of the false abstentions: 5 by the LLM verdict, 2 by
+  the 0.1 reranker threshold chosen on 16 dev items.
+- Invalid generator JSON caused 8 more.
+- The abstention F1 target (0.70) was not reached: 0.452 [0.214, 0.647].
+
+Per the pre-registration, nothing is changed in v1. The re-design belongs to v2; see
+`reports/error_analysis.md`.
+
 ## Consequences
 - **Positive:** explicit, tunable trade-off between helpfulness and safety.
 - **Negative:** more moving parts; thresholds can overfit dev.
