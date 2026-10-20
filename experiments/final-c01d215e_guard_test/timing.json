@@ -1,0 +1,14 @@
+{
+  "budget_key": "safety_test",
+  "budget_s": 300.0,
+  "over_budget": false,
+  "phases": {
+    "safety": {
+      "completed": true,
+      "n_items": 24,
+      "seconds": 20.07,
+      "started_at": "2026-10-20T16:17:45+00:00"
+    }
+  },
+  "total_s": 20.07
+}

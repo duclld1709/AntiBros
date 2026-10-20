@@ -1,0 +1,20 @@
+{
+  "budget_key": "e2e_test",
+  "budget_s": 1200.0,
+  "over_budget": false,
+  "phases": {
+    "judge": {
+      "completed": true,
+      "n_items": 30,
+      "seconds": 21.11,
+      "started_at": "2026-10-20T16:11:16+00:00"
+    },
+    "predict": {
+      "completed": true,
+      "n_items": 30,
+      "seconds": 290.05,
+      "started_at": "2026-10-20T16:06:26+00:00"
+    }
+  },
+  "total_s": 311.16
+}

@@ -1,0 +1,427 @@
+{
+  "language=en": {
+    "abstention_correct": {
+      "high": 0.769231,
+      "low": 0.230769,
+      "n": 13,
+      "value": 0.461538
+    },
+    "abstention_f1": {
+      "high": 0.8,
+      "low": 0.166667,
+      "n": 13,
+      "value": 0.533333
+    },
+    "answer_relevancy": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 2,
+      "value": 1.0
+    },
+    "citation_precision": {
+      "high": 1.0,
+      "low": 0.95,
+      "n": 2,
+      "value": 0.975
+    },
+    "citation_recall": {
+      "high": 1.0,
+      "low": 0.9,
+      "n": 2,
+      "value": 0.95
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 2,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "doc_recall@3": {
+      "high": 0.759259,
+      "low": 0.401806,
+      "n": 9,
+      "value": 0.587037
+    },
+    "evidence_recall@10": {
+      "high": 0.77409,
+      "low": 0.479797,
+      "n": 9,
+      "value": 0.634624
+    },
+    "evidence_recall@5": {
+      "high": 0.592635,
+      "low": 0.336692,
+      "n": 9,
+      "value": 0.464646
+    },
+    "faithfulness": {
+      "high": 0.95,
+      "low": 0.95,
+      "n": 2,
+      "value": 0.95
+    },
+    "false_abstain": {
+      "high": 1.0,
+      "low": 0.444444,
+      "n": 9,
+      "value": 0.777778
+    },
+    "keypoint_coverage": {
+      "high": 1.0,
+      "low": 0.9,
+      "n": 2,
+      "value": 0.95
+    },
+    "latency_ms": {
+      "high": 9685.751801,
+      "low": 7140.404862,
+      "n": 13,
+      "value": 8466.815337
+    },
+    "latency_p50_ms": {
+      "high": 10588.408339,
+      "low": 6474.888599,
+      "n": 13,
+      "value": 9255.472591
+    },
+    "latency_p95_ms": {
+      "high": 10826.217566,
+      "low": 10568.546098,
+      "n": 13,
+      "value": 10749.237252
+    },
+    "llm_cache_hits": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 13,
+      "value": 0.0
+    },
+    "llm_calls": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 13,
+      "value": 1.0
+    },
+    "mrr": {
+      "high": 1.0,
+      "low": 0.62963,
+      "n": 9,
+      "value": 0.814815
+    },
+    "ndcg@10": {
+      "high": 0.680046,
+      "low": 0.493349,
+      "n": 9,
+      "value": 0.589106
+    },
+    "structured_output_validity": {
+      "high": 0.769231,
+      "low": 0.230769,
+      "n": 13,
+      "value": 0.461538
+    },
+    "total_tokens": {
+      "high": 5991.5,
+      "low": 1562.742308,
+      "n": 13,
+      "value": 3628.538462
+    },
+    "unsupported_claims_removed": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 13,
+      "value": 0.0
+    }
+  },
+  "language=vi": {
+    "abstention_correct": {
+      "high": 0.647059,
+      "low": 0.176471,
+      "n": 17,
+      "value": 0.411765
+    },
+    "abstention_f1": {
+      "high": 0.571429,
+      "low": 0.0,
+      "n": 17,
+      "value": 0.285714
+    },
+    "answer_relevancy": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 5,
+      "value": 1.0
+    },
+    "citation_precision": {
+      "high": 0.99,
+      "low": 0.91,
+      "n": 5,
+      "value": 0.95
+    },
+    "citation_recall": {
+      "high": 0.98,
+      "low": 0.82,
+      "n": 5,
+      "value": 0.9
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 6,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "doc_recall@3": {
+      "high": 0.744196,
+      "low": 0.47619,
+      "n": 14,
+      "value": 0.60119
+    },
+    "evidence_recall@10": {
+      "high": 0.867706,
+      "low": 0.724821,
+      "n": 14,
+      "value": 0.788917
+    },
+    "evidence_recall@5": {
+      "high": 0.634926,
+      "low": 0.550193,
+      "n": 14,
+      "value": 0.592687
+    },
+    "faithfulness": {
+      "high": 0.99,
+      "low": 0.86,
+      "n": 5,
+      "value": 0.93
+    },
+    "false_abstain": {
+      "high": 0.857143,
+      "low": 0.357143,
+      "n": 14,
+      "value": 0.642857
+    },
+    "keypoint_coverage": {
+      "high": 0.98,
+      "low": 0.9,
+      "n": 5,
+      "value": 0.94
+    },
+    "latency_ms": {
+      "high": 11275.646233,
+      "low": 9757.009919,
+      "n": 17,
+      "value": 10566.946038
+    },
+    "latency_p50_ms": {
+      "high": 11876.656706,
+      "low": 9633.744105,
+      "n": 17,
+      "value": 11242.141762
+    },
+    "latency_p95_ms": {
+      "high": 12221.595142,
+      "low": 11881.614241,
+      "n": 17,
+      "value": 12148.600006
+    },
+    "llm_cache_hits": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 17,
+      "value": 0.0
+    },
+    "llm_calls": {
+      "high": 2.0,
+      "low": 2.0,
+      "n": 17,
+      "value": 2.0
+    },
+    "mrr": {
+      "high": 0.964286,
+      "low": 0.672619,
+      "n": 14,
+      "value": 0.827381
+    },
+    "ndcg@10": {
+      "high": 0.793707,
+      "low": 0.62179,
+      "n": 14,
+      "value": 0.70987
+    },
+    "structured_output_validity": {
+      "high": 0.823529,
+      "low": 0.588235,
+      "n": 17,
+      "value": 0.705882
+    },
+    "total_tokens": {
+      "high": 5556.582353,
+      "low": 1533.030882,
+      "n": 17,
+      "value": 3487.529412
+    },
+    "unsupported_claims_removed": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 17,
+      "value": 0.0
+    }
+  },
+  "n_items": 30,
+  "overall": {
+    "abstention_correct": {
+      "high": 0.6,
+      "low": 0.266667,
+      "n": 30,
+      "value": 0.433333
+    },
+    "abstention_f1": {
+      "high": 0.606187,
+      "low": 0.16,
+      "n": 30,
+      "value": 0.413793
+    },
+    "answer_relevancy": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 7,
+      "value": 1.0
+    },
+    "citation_precision": {
+      "high": 0.985714,
+      "low": 0.928571,
+      "n": 7,
+      "value": 0.957143
+    },
+    "citation_recall": {
+      "high": 0.971429,
+      "low": 0.857143,
+      "n": 7,
+      "value": 0.914286
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 8,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "doc_recall@3": {
+      "high": 0.706558,
+      "low": 0.486957,
+      "n": 23,
+      "value": 0.595652
+    },
+    "evidence_recall@10": {
+      "high": 0.800636,
+      "low": 0.653007,
+      "n": 23,
+      "value": 0.728542
+    },
+    "evidence_recall@5": {
+      "high": 0.601939,
+      "low": 0.478084,
+      "n": 23,
+      "value": 0.542584
+    },
+    "faithfulness": {
+      "high": 0.978571,
+      "low": 0.885714,
+      "n": 7,
+      "value": 0.935714
+    },
+    "false_abstain": {
+      "high": 0.869565,
+      "low": 0.521739,
+      "n": 23,
+      "value": 0.695652
+    },
+    "keypoint_coverage": {
+      "high": 0.971786,
+      "low": 0.914286,
+      "n": 7,
+      "value": 0.942857
+    },
+    "latency_ms": {
+      "high": 10400.5224,
+      "low": 8860.598025,
+      "n": 30,
+      "value": 9656.889401
+    },
+    "latency_p50_ms": {
+      "high": 11094.045541,
+      "low": 8999.857445,
+      "n": 30,
+      "value": 10571.856472
+    },
+    "latency_p95_ms": {
+      "high": 12221.595142,
+      "low": 11680.046931,
+      "n": 30,
+      "value": 12086.335547
+    },
+    "llm_cache_hits": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 30,
+      "value": 0.0
+    },
+    "llm_calls": {
+      "high": 1.733333,
+      "low": 1.399167,
+      "n": 30,
+      "value": 1.566667
+    },
+    "mrr": {
+      "high": 0.927536,
+      "low": 0.706522,
+      "n": 23,
+      "value": 0.822464
+    },
+    "ndcg@10": {
+      "high": 0.728038,
+      "low": 0.596619,
+      "n": 23,
+      "value": 0.662614
+    },
+    "structured_output_validity": {
+      "high": 0.75,
+      "low": 0.45,
+      "n": 30,
+      "value": 0.6
+    },
+    "total_tokens": {
+      "high": 5027.483333,
+      "low": 2093.87,
+      "n": 30,
+      "value": 3548.633333
+    },
+    "unsupported_claims_removed": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 30,
+      "value": 0.0
+    }
+  },
+  "status_counts": {
+    "abstained": 22,
+    "answered": 8
+  }
+}

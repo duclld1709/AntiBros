@@ -1,0 +1,49 @@
+{
+  "fpr": {
+    "high": 0.25,
+    "low": 0.0,
+    "n": 12,
+    "value": 0.083333
+  },
+  "language=en": {
+    "fpr": {
+      "high": 0.5,
+      "low": 0.0,
+      "n": 6,
+      "value": 0.166667
+    },
+    "red_flag_recall": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 6,
+      "value": 1.0
+    }
+  },
+  "language=vi": {
+    "fpr": {
+      "high": 0.0,
+      "low": 0.0,
+      "n": 6,
+      "value": 0.0
+    },
+    "red_flag_recall": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 6,
+      "value": 1.0
+    }
+  },
+  "latency_ms": {
+    "high": 1393.992527,
+    "low": 442.466429,
+    "n": 24,
+    "value": 836.145355
+  },
+  "n_items": 24,
+  "red_flag_recall": {
+    "high": 1.0,
+    "low": 1.0,
+    "n": 12,
+    "value": 1.0
+  }
+}
