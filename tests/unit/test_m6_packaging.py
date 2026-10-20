@@ -149,3 +149,23 @@ def test_ci_has_the_spec_jobs() -> None:
         ci["jobs"]
     )
     assert json.dumps(ci["jobs"]["compose-smoke"]).count("fresh_clone_test.py") == 1
+
+
+def test_report_figures_render_valid_svg_from_experiments() -> None:
+    import importlib.util
+    import xml.etree.ElementTree as ET
+
+    spec = importlib.util.spec_from_file_location("figures", Path("scripts/make_report_figures.py"))
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    import sys
+
+    sys.modules["figures"] = mod  # dataclasses resolve their module through sys.modules
+    spec.loader.exec_module(mod)
+    for build in (mod.retrieval_figure, mod.loo_figure, mod.final_figure, mod.guard_figure):
+        root = ET.fromstring(build())
+        ns = "{http://www.w3.org/2000/svg}"
+        assert root.tag == f"{ns}svg"
+        circles = root.findall(f".//{ns}circle")
+        tips = [g for g in root.iter(f"{ns}g") if g.find(f"{ns}title") is not None]
+        assert circles and len(tips) == len(circles)  # every mark has a tooltip

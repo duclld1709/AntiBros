@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 778 524" width="778" height="524" role="img" aria-label="Retrieval ablation on dev: Evidence Recall@10 with 95% CIs">
+<title>Retrieval ablation on dev: Evidence Recall@10 with 95% CIs</title>
+
+<style>
+  .surface { fill: #fcfcfb; }
+  .ink { fill: #0b0b0b; font: 600 13px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .label { fill: #0b0b0b; font: 12px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .muted { fill: #52514e; font: 11px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .grid { stroke: #e4e3df; stroke-width: 1; }
+  .zero { stroke: #8a8984; stroke-width: 1; stroke-dasharray: 3 3; }
+  .ci { stroke: #2a78d6; stroke-width: 2; stroke-linecap: round; }
+  .dot { fill: #2a78d6; stroke: #fcfcfb; stroke-width: 2; }
+  .hollow { fill: #fcfcfb; stroke: #2a78d6; stroke-width: 2; }
+  @media (prefers-color-scheme: dark) {
+    .surface { fill: #1a1a19; }
+    .ink, .label { fill: #f0efec; }
+    .muted { fill: #c3c2b7; }
+    .grid { stroke: #34342f; }
+    .zero { stroke: #8f8e86; }
+    .ci { stroke: #3987e5; }
+    .dot { fill: #3987e5; stroke: #1a1a19; }
+    .hollow { fill: #1a1a19; stroke: #3987e5; }
+  }
+</style>
+
+<rect class="surface" x="0" y="0" width="778" height="524" rx="8"/>
+<text class="ink" x="14" y="32">Evidence Recall@10, golden dev (n = 12)</text>
+<line class="grid" x1="244.0" y1="44" x2="244.0" y2="226"/>
+<text class="muted" x="244.0" y="242" text-anchor="middle">0</text>
+<line class="grid" x1="310.0" y1="44" x2="310.0" y2="226"/>
+<text class="muted" x="310.0" y="242" text-anchor="middle">0.2</text>
+<line class="grid" x1="376.0" y1="44" x2="376.0" y2="226"/>
+<text class="muted" x="376.0" y="242" text-anchor="middle">0.4</text>
+<line class="grid" x1="442.0" y1="44" x2="442.0" y2="226"/>
+<text class="muted" x="442.0" y="242" text-anchor="middle">0.6</text>
+<line class="grid" x1="508.0" y1="44" x2="508.0" y2="226"/>
+<text class="muted" x="508.0" y="242" text-anchor="middle">0.8</text>
+<line class="grid" x1="574.0" y1="44" x2="574.0" y2="226"/>
+<text class="muted" x="574.0" y="242" text-anchor="middle">1</text>
+<g><title>hybrid (reference): 0.476 [0.299, 0.645]</title>
+<text class="label" x="14" y="61.0">hybrid (reference)</text>
+<line class="ci" x1="342.7" y1="57.0" x2="456.7" y2="57.0"/>
+<circle class="dot" cx="400.9" cy="57.0" r="5"/>
+<text class="muted" x="586" y="61.0">0.476 [0.299, 0.645]</text>
+</g>
+<g><title>fixed chunks: 0.465 [0.306, 0.639]</title>
+<text class="label" x="14" y="87.0">fixed chunks</text>
+<line class="ci" x1="345.1" y1="83.0" x2="454.9" y2="83.0"/>
+<circle class="dot" cx="397.4" cy="83.0" r="5"/>
+<text class="muted" x="586" y="87.0">0.465 [0.306, 0.639]</text>
+</g>
+<g><title>recursive chunks: 0.357 [0.188, 0.535]</title>
+<text class="label" x="14" y="113.0">recursive chunks</text>
+<line class="ci" x1="306.0" y1="109.0" x2="420.7" y2="109.0"/>
+<circle class="dot" cx="361.7" cy="109.0" r="5"/>
+<text class="muted" x="586" y="113.0">0.357 [0.188, 0.535]</text>
+</g>
+<g><title>sparse only: 0.277 [0.102, 0.461]</title>
+<text class="label" x="14" y="139.0">sparse only</text>
+<line class="ci" x1="277.6" y1="135.0" x2="396.2" y2="135.0"/>
+<circle class="dot" cx="335.4" cy="135.0" r="5"/>
+<text class="muted" x="586" y="139.0">0.277 [0.102, 0.461]</text>
+</g>
+<g><title>dense bge-m3: 0.634 [0.421, 0.810]</title>
+<text class="label" x="14" y="165.0">dense bge-m3</text>
+<line class="ci" x1="383.0" y1="161.0" x2="511.4" y2="161.0"/>
+<circle class="dot" cx="453.3" cy="161.0" r="5"/>
+<text class="muted" x="586" y="165.0">0.634 [0.421, 0.810]</text>
+</g>
+<g><title>dense e5-large: 0.642 [0.457, 0.800]</title>
+<text class="label" x="14" y="191.0">dense e5-large</text>
+<line class="ci" x1="394.9" y1="187.0" x2="508.1" y2="187.0"/>
+<circle class="dot" cx="455.8" cy="187.0" r="5"/>
+<text class="muted" x="586" y="191.0">0.642 [0.457, 0.800]</text>
+</g>
+<g><title>hybrid + reranker: 0.559 [0.372, 0.745]</title>
+<text class="label" x="14" y="217.0">hybrid + reranker</text>
+<line class="ci" x1="366.8" y1="213.0" x2="490.0" y2="213.0"/>
+<circle class="dot" cx="428.4" cy="213.0" r="5"/>
+<text class="muted" x="586" y="217.0">0.559 [0.372, 0.745]</text>
+</g>
+<text class="ink" x="14" y="280">Evidence Recall@10, synth dev (n = 94)</text>
+<line class="grid" x1="244.0" y1="292" x2="244.0" y2="474"/>
+<text class="muted" x="244.0" y="490" text-anchor="middle">0</text>
+<line class="grid" x1="310.0" y1="292" x2="310.0" y2="474"/>
+<text class="muted" x="310.0" y="490" text-anchor="middle">0.2</text>
+<line class="grid" x1="376.0" y1="292" x2="376.0" y2="474"/>
+<text class="muted" x="376.0" y="490" text-anchor="middle">0.4</text>
+<line class="grid" x1="442.0" y1="292" x2="442.0" y2="474"/>
+<text class="muted" x="442.0" y="490" text-anchor="middle">0.6</text>
+<line class="grid" x1="508.0" y1="292" x2="508.0" y2="474"/>
+<text class="muted" x="508.0" y="490" text-anchor="middle">0.8</text>
+<line class="grid" x1="574.0" y1="292" x2="574.0" y2="474"/>
+<text class="muted" x="574.0" y="490" text-anchor="middle">1</text>
+<g><title>hybrid (reference): 0.713 [0.628, 0.809]</title>
+<text class="label" x="14" y="309.0">hybrid (reference)</text>
+<line class="ci" x1="451.1" y1="305.0" x2="510.8" y2="305.0"/>
+<circle class="dot" cx="479.2" cy="305.0" r="5"/>
+<text class="muted" x="586" y="309.0">0.713 [0.628, 0.809]</text>
+</g>
+<g><title>fixed chunks: 0.723 [0.638, 0.809]</title>
+<text class="label" x="14" y="335.0">fixed chunks</text>
+<line class="ci" x1="454.6" y1="331.0" x2="510.8" y2="331.0"/>
+<circle class="dot" cx="482.7" cy="331.0" r="5"/>
+<text class="muted" x="586" y="335.0">0.723 [0.638, 0.809]</text>
+</g>
+<g><title>recursive chunks: 0.691 [0.596, 0.787]</title>
+<text class="label" x="14" y="361.0">recursive chunks</text>
+<line class="ci" x1="440.6" y1="357.0" x2="503.8" y2="357.0"/>
+<circle class="dot" cx="472.2" cy="357.0" r="5"/>
+<text class="muted" x="586" y="361.0">0.691 [0.596, 0.787]</text>
+</g>
+<g><title>sparse only: 0.585 [0.489, 0.681]</title>
+<text class="label" x="14" y="387.0">sparse only</text>
+<line class="ci" x1="405.5" y1="383.0" x2="468.7" y2="383.0"/>
+<circle class="dot" cx="437.1" cy="383.0" r="5"/>
+<text class="muted" x="586" y="387.0">0.585 [0.489, 0.681]</text>
+</g>
+<g><title>dense bge-m3: 0.723 [0.628, 0.819]</title>
+<text class="label" x="14" y="413.0">dense bge-m3</text>
+<line class="ci" x1="451.1" y1="409.0" x2="514.3" y2="409.0"/>
+<circle class="dot" cx="482.7" cy="409.0" r="5"/>
+<text class="muted" x="586" y="413.0">0.723 [0.628, 0.819]</text>
+</g>
+<g><title>dense e5-large: 0.798 [0.723, 0.872]</title>
+<text class="label" x="14" y="439.0">dense e5-large</text>
+<line class="ci" x1="482.7" y1="435.0" x2="531.9" y2="435.0"/>
+<circle class="dot" cx="507.3" cy="435.0" r="5"/>
+<text class="muted" x="586" y="439.0">0.798 [0.723, 0.872]</text>
+</g>
+<g><title>hybrid + reranker: 0.798 [0.723, 0.883]</title>
+<text class="label" x="14" y="465.0">hybrid + reranker</text>
+<line class="ci" x1="482.7" y1="461.0" x2="535.4" y2="461.0"/>
+<circle class="dot" cx="507.3" cy="461.0" r="5"/>
+<text class="muted" x="586" y="465.0">0.798 [0.723, 0.883]</text>
+</g>
+</svg>

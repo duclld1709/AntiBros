@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 778 368" width="778" height="368" role="img" aria-label="Guard variants: red-flag recall and FPR with 95% CIs">
+<title>Guard variants: red-flag recall and FPR with 95% CIs</title>
+
+<style>
+  .surface { fill: #fcfcfb; }
+  .ink { fill: #0b0b0b; font: 600 13px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .label { fill: #0b0b0b; font: 12px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .muted { fill: #52514e; font: 11px system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .grid { stroke: #e4e3df; stroke-width: 1; }
+  .zero { stroke: #8a8984; stroke-width: 1; stroke-dasharray: 3 3; }
+  .ci { stroke: #2a78d6; stroke-width: 2; stroke-linecap: round; }
+  .dot { fill: #2a78d6; stroke: #fcfcfb; stroke-width: 2; }
+  .hollow { fill: #fcfcfb; stroke: #2a78d6; stroke-width: 2; }
+  @media (prefers-color-scheme: dark) {
+    .surface { fill: #1a1a19; }
+    .ink, .label { fill: #f0efec; }
+    .muted { fill: #c3c2b7; }
+    .grid { stroke: #34342f; }
+    .zero { stroke: #8f8e86; }
+    .ci { stroke: #3987e5; }
+    .dot { fill: #3987e5; stroke: #1a1a19; }
+    .hollow { fill: #1a1a19; stroke: #3987e5; }
+  }
+</style>
+
+<rect class="surface" x="0" y="0" width="778" height="368" rx="8"/>
+<text class="ink" x="14" y="32">red-flag recall</text>
+<line class="grid" x1="244.0" y1="44" x2="244.0" y2="148"/>
+<text class="muted" x="244.0" y="164" text-anchor="middle">0</text>
+<line class="grid" x1="310.0" y1="44" x2="310.0" y2="148"/>
+<text class="muted" x="310.0" y="164" text-anchor="middle">0.2</text>
+<line class="grid" x1="376.0" y1="44" x2="376.0" y2="148"/>
+<text class="muted" x="376.0" y="164" text-anchor="middle">0.4</text>
+<line class="grid" x1="442.0" y1="44" x2="442.0" y2="148"/>
+<text class="muted" x="442.0" y="164" text-anchor="middle">0.6</text>
+<line class="grid" x1="508.0" y1="44" x2="508.0" y2="148"/>
+<text class="muted" x="508.0" y="164" text-anchor="middle">0.8</text>
+<line class="grid" x1="574.0" y1="44" x2="574.0" y2="148"/>
+<text class="muted" x="574.0" y="164" text-anchor="middle">1</text>
+<g><title>dev: rule: 0.750 [0.500, 1.000] (n = 8)</title>
+<text class="label" x="14" y="61.0">dev: rule</text>
+<line class="ci" x1="409.0" y1="57.0" x2="574.0" y2="57.0"/>
+<circle class="dot" cx="491.5" cy="57.0" r="5"/>
+<text class="muted" x="586" y="61.0">0.750 [0.500, 1.000] n = 8</text>
+</g>
+<g><title>dev: llm: 1.000 [1.000, 1.000] (n = 8)</title>
+<text class="label" x="14" y="87.0">dev: llm</text>
+<line class="ci" x1="574.0" y1="83.0" x2="574.0" y2="83.0"/>
+<circle class="dot" cx="574.0" cy="83.0" r="5"/>
+<text class="muted" x="586" y="87.0">1.000 [1.000, 1.000] n = 8</text>
+</g>
+<g><title>dev: rule_llm (selected): 1.000 [1.000, 1.000] (n = 8)</title>
+<text class="label" x="14" y="113.0">dev: rule_llm (selected)</text>
+<line class="ci" x1="574.0" y1="109.0" x2="574.0" y2="109.0"/>
+<circle class="dot" cx="574.0" cy="109.0" r="5"/>
+<text class="muted" x="586" y="113.0">1.000 [1.000, 1.000] n = 8</text>
+</g>
+<g><title>test: rule_llm: 1.000 [1.000, 1.000] (n = 12)</title>
+<text class="label" x="14" y="139.0">test: rule_llm</text>
+<line class="ci" x1="574.0" y1="135.0" x2="574.0" y2="135.0"/>
+<circle class="dot" cx="574.0" cy="135.0" r="5"/>
+<text class="muted" x="586" y="139.0">1.000 [1.000, 1.000] n = 12</text>
+</g>
+<text class="ink" x="14" y="202">false-positive rate</text>
+<line class="grid" x1="244.0" y1="214" x2="244.0" y2="318"/>
+<text class="muted" x="244.0" y="334" text-anchor="middle">0</text>
+<line class="grid" x1="310.0" y1="214" x2="310.0" y2="318"/>
+<text class="muted" x="310.0" y="334" text-anchor="middle">0.2</text>
+<line class="grid" x1="376.0" y1="214" x2="376.0" y2="318"/>
+<text class="muted" x="376.0" y="334" text-anchor="middle">0.4</text>
+<line class="grid" x1="442.0" y1="214" x2="442.0" y2="318"/>
+<text class="muted" x="442.0" y="334" text-anchor="middle">0.6</text>
+<line class="grid" x1="508.0" y1="214" x2="508.0" y2="318"/>
+<text class="muted" x="508.0" y="334" text-anchor="middle">0.8</text>
+<line class="grid" x1="574.0" y1="214" x2="574.0" y2="318"/>
+<text class="muted" x="574.0" y="334" text-anchor="middle">1</text>
+<g><title>dev: rule: 0.000 [0.000, 0.000] (n = 8)</title>
+<text class="label" x="14" y="231.0">dev: rule</text>
+<line class="ci" x1="244.0" y1="227.0" x2="244.0" y2="227.0"/>
+<circle class="dot" cx="244.0" cy="227.0" r="5"/>
+<text class="muted" x="586" y="231.0">0.000 [0.000, 0.000] n = 8</text>
+</g>
+<g><title>dev: llm: 0.000 [0.000, 0.000] (n = 8)</title>
+<text class="label" x="14" y="257.0">dev: llm</text>
+<line class="ci" x1="244.0" y1="253.0" x2="244.0" y2="253.0"/>
+<circle class="dot" cx="244.0" cy="253.0" r="5"/>
+<text class="muted" x="586" y="257.0">0.000 [0.000, 0.000] n = 8</text>
+</g>
+<g><title>dev: rule_llm (selected): 0.000 [0.000, 0.000] (n = 8)</title>
+<text class="label" x="14" y="283.0">dev: rule_llm (selected)</text>
+<line class="ci" x1="244.0" y1="279.0" x2="244.0" y2="279.0"/>
+<circle class="dot" cx="244.0" cy="279.0" r="5"/>
+<text class="muted" x="586" y="283.0">0.000 [0.000, 0.000] n = 8</text>
+</g>
+<g><title>test: rule_llm: 0.083 [0.000, 0.250] (n = 12)</title>
+<text class="label" x="14" y="309.0">test: rule_llm</text>
+<line class="ci" x1="244.0" y1="305.0" x2="326.5" y2="305.0"/>
+<circle class="dot" cx="271.5" cy="305.0" r="5"/>
+<text class="muted" x="586" y="309.0">0.083 [0.000, 0.250] n = 12</text>
+</g>
+</svg>
