@@ -1,0 +1,23 @@
+# Two cross-family verifiers for the evalset (M2, spec §6.2). Runs once; partial CPU
+# offload of qwen3.5:9b is acceptable. gemma4:e4b is also the judge (noted in Limitations).
+name: evalset_verifiers
+description: gemma4:e4b + qwen3.5:9b, both Q4_K_M.
+verifiers:
+  - provider: ollama
+    model: gemma4:e4b
+    family: gemma4
+    quantization: Q4_K_M
+    digest: dc35e8d9c6061baa6f0fa870975ab6932e2542b579b13ea0f199fa4bb7300c9c
+    num_ctx: 8192
+    keep_alive: 10m
+    temperature: 0.0
+    think: false
+  - provider: ollama
+    model: qwen3.5:9b
+    family: qwen35
+    quantization: Q4_K_M
+    digest: 56671c2ab9385f9cfcb404638e32cd62d88e3501d44822208363c010179a3c90
+    num_ctx: 8192
+    keep_alive: 10m
+    temperature: 0.0
+    think: false

@@ -1,0 +1,23 @@
+# Default profile for every eval. Tags/digests verified with `ollama` 0.40.6 on 2026-10-20.
+name: laptop
+description: Pipeline qwen3.5:4b (Q4_K_M) + cross-family judge gemma4:e4b (Q4_K_M).
+pipeline:
+  provider: ollama
+  model: qwen3.5:4b
+  family: qwen35
+  quantization: Q4_K_M
+  digest: d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04
+  num_ctx: 8192
+  keep_alive: 10m
+  temperature: 0.0
+  think: false
+judge:
+  provider: ollama
+  model: gemma4:e4b
+  family: gemma4
+  quantization: Q4_K_M
+  digest: dc35e8d9c6061baa6f0fa870975ab6932e2542b579b13ea0f199fa4bb7300c9c
+  num_ctx: 8192
+  keep_alive: 10m
+  temperature: 0.0
+  think: false
