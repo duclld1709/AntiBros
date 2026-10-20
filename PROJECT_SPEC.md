@@ -188,7 +188,8 @@ Tất cả model trong bảng là **ứng viên**. Ngày 2026-10-20, registry Ol
 ### 4.5 Lớp LLM trừu tượng
 - Interface `LLMClient.complete(messages, schema=None, params) -> LLMResult(text, parsed, usage, latency_ms)`.
 - Các adapter:
-  - `openai_compatible`: Ollama, llama.cpp server, OpenAI.
+  - `ollama`: API gốc `/api/chat` của Ollama, dùng cho mọi hồ sơ local (đặt được `num_ctx`, `think: false`, `keep_alive`, trả về thời gian prefill/decode). Xem ADR-0017.
+  - `openai_compatible`: llama.cpp server, OpenAI.
   - `gemini`: SDK `google-genai`.
   - `fake`: dùng cho unit test và CI; trả lời theo kịch bản định sẵn.
 - Chọn adapter bằng config: `llm.provider`, `llm.model`, `llm.base_url`, `llm.api_key_env`, `llm.price_table`.

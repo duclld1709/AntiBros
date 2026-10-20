@@ -1,9 +1,9 @@
 # ADR-0017: Native Ollama adapter for local dev and evaluation
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-20
 - **Milestone:** M0
-- **Deciders:** project owner (pending review)
+- **Deciders:** project owner
 
 ## Context
 Spec §4.5 routes Ollama through the `openai_compatible` adapter. The local runtime has to:
@@ -36,4 +36,4 @@ llama.cpp. Both adapters sit behind `LLMClient` and its cache.
 - **Positive:** VRAM and throughput are controlled and measured through the same code path the pipeline uses.
 - **Negative / risks:** provider `ollama` is not portable to hosted APIs; switching to an API is still config-only via `openai_compatible`/`gemini`.
 - **Revisit if:** Ollama's `/v1` endpoint gains per-request `num_ctx` and timing fields.
-- **Spec update proposed:** §4.5 adapter list gains `ollama` (native API); `openai_compatible` covers llama.cpp server and OpenAI.
+- **Spec updated:** §4.5 adapter list gains `ollama` (native API); `openai_compatible` covers llama.cpp server and OpenAI.
