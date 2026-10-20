@@ -4,7 +4,9 @@ Evidence-based Q&A for muscle-building nutrition (protein and creatine): cited R
 search, reranking, citation verification, abstention and medical guardrails, evaluated on an RTX
 3050 6GB laptop.
 
-> Status: M3 baseline RAG, providers, API and UI. Run artifacts are stored under `experiments/`.
+> Status: M4 code complete (rerank, query rewrite, grade/abstain, citation verification,
+> guardrails); the M4 dev ablations are pending on the laptop. Run artifacts are stored under
+> `experiments/`.
 
 ## Quickstart (Windows, PowerShell)
 
@@ -23,8 +25,13 @@ Run the M3 development baseline with:
 
 ```powershell
 uv run antibros eval predict --config configs/baseline.yaml --models configs/models/laptop.yaml --tag m3_dev
-uv run antibros eval judge --config configs/baseline.yaml --models configs/models/laptop.yaml --run experiments/<run-id>
+uv run antibros eval judge --models configs/models/laptop.yaml --run experiments/<run-id>
 ```
+
+The full pipeline is `configs/full.yaml` (baseline + every M4 step). Ablation configs live in
+`configs/ablations/` and inherit from it with `extends:`; the order of the M4 dev runs is in
+[docs/runbooks/m4_dev_runs.md](docs/runbooks/m4_dev_runs.md). The test split runs only through
+the pre-registered plan `configs/final_eval_plan.yaml` (ADR-0014).
 
 See [reports/hardware.md](reports/hardware.md) for measured throughput and projections. Milestones
 are documented in [docs/milestones/](docs/milestones/) and design decisions in [docs/adr/](docs/adr/).

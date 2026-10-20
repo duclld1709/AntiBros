@@ -18,6 +18,7 @@ Papers have a strong structure (abstract, methods, results, discussion). Answers
 Proposed: **Section-aware**. Decide after the chunking ablation.
 
 ## Evidence
+Planned runs: `configs/ablations/{retrieval_fixed / retrieval_recursive / retrieval_hybrid}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:
 TBD — Evidence Recall@10 per strategy, scored from evidence spans so all strategies share one label set (ADR-0015); distribution of chunk sizes.
 
 ## Consequences

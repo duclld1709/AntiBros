@@ -23,6 +23,13 @@ Rationale:
 
 Policy: drop unsupported claims; abstain when the share of dropped claims exceeds a configurable threshold (tuned on dev within a pre-declared grid).
 
+Implementation (M4): `verify_citations` sends every claim with only the passages it cites
+(`prompts/verify.md`) and expects one verdict per claim. Claims without a "supported"
+verdict are dropped; the answer abstains when no claim survives or the dropped share exceeds
+`pipeline.verify.max_removed_ratio` (grid in `configs/full.yaml` → `tuning`). Invalid JSON
+from the verifier means "cannot verify" and also abstains (ADR-0021). Citations are
+renumbered after the drop.
+
 The independent judge (a different model family) measures citation precision/recall during evaluation, so the self-check bias is visible rather than hidden.
 
 ## Evidence
