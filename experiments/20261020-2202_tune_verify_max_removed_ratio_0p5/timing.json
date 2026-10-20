@@ -1,0 +1,14 @@
+{
+  "budget_key": "e2e_dev",
+  "budget_s": 600.0,
+  "over_budget": false,
+  "phases": {
+    "predict": {
+      "completed": true,
+      "n_items": 16,
+      "seconds": 399.09,
+      "started_at": "2026-10-20T15:02:09+00:00"
+    }
+  },
+  "total_s": 399.09
+}

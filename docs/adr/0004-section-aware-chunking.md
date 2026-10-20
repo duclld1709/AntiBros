@@ -1,7 +1,7 @@
 # ADR-0004: Section-aware chunking for scientific papers
 
-- **Status:** Proposed
-- **Date:** TBD
+- **Status:** Accepted
+- **Date:** 2026-10-20
 - **Milestone:** M1 (proposed), M4 (decided)
 
 ## Context
@@ -15,7 +15,7 @@ Papers have a strong structure (abstract, methods, results, discussion). Answers
 | Section-aware + recursive inside, prepend `title + section` | Keeps structure; enables section filtering; better context per chunk | Depends on parser quality; uneven chunk sizes |
 
 ## Decision
-Proposed: **Section-aware**. Decide after the chunking ablation.
+**Section-aware** remains selected. Recursive chunking reduced golden dev evidence Recall@10 by 0.119 versus section-aware (95% paired CI [-0.238, -0.015]); fixed chunking had similar Recall@10, with a small significant MRR increase (+0.048, CI [+0.002, +0.101]). Section-aware remains the default because it preserves scientific section context while matching hybrid's retrieval quality on the main recall metric.
 
 ## Evidence
 Planned runs: `configs/ablations/{retrieval_fixed / retrieval_recursive / retrieval_hybrid}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:

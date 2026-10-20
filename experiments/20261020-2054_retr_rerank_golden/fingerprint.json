@@ -1,0 +1,18 @@
+{
+  "bootstrap_seed": 42,
+  "config_sha256": "6cef890e1445cec1e3bf1e0e87bd62602a0e0e4266372b24009599ea53d54d90",
+  "corpus_manifest_sha256": "3cee8221d2a9558f8ab4c3128066961b18dff1170c2d95ceb5d54735480531df",
+  "eval_set": "golden",
+  "evalset_sha256": "0cba1766ba807ba75f481e966022cfe4bbca163dc89b407ab5d49d812c4d3e31",
+  "evalset_version": "v1",
+  "git_commit": "8d5f0205dd0d06b0ce42acf59f0438129f8574bb-dirty",
+  "hardware": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+  "judge_digest": null,
+  "judge_model": null,
+  "judge_temperature": null,
+  "metric_set": "retrieval-v1",
+  "pipeline_digest": null,
+  "pipeline_model": "hybrid:section_aware:bge_m3+rerank:BAAI/bge-reranker-v2-m3",
+  "runtime_version": "python 3.12.15; antibros 0.1.0; torch 2.11.0+cu128",
+  "split": "dev"
+}

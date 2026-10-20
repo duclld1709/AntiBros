@@ -105,7 +105,7 @@ rerank:
   enabled: false
   kind: bge_reranker      # bge_reranker | fake (CI)
   model: BAAI/bge-reranker-v2-m3
-  device: cuda            # reports/hardware.md: fits next to the LLM; first thing to move to cpu on OOM
+  device: cpu             # M4 tune OOM mitigation; see reports/hardware.md
   fp16: true
   batch_size: 8
   max_length: 512

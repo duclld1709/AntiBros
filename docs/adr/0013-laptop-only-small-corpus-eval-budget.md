@@ -36,7 +36,7 @@ A local ~4B model on this GPU is expected to handle roughly one question every 2
 - Retrieval quality is measured at the evidence-span level, not the document level (ADR-0015).
 
 ## Evidence
-`reports/hardware.md` (measured VRAM and throughput), `timing.json` in every `experiments/` run.
+`reports/hardware.md` (measured VRAM and throughput), `timing.json` in every `experiments/` run. On 2026-10-20 the M4 grade-threshold tune exceeded its 600 s dev budget at 629.41 s with the full laptop profile and CPU reranker (GPU reranker caused a VRAM OOM). Per ?6.8, the tune is being rerun with `laptop_light`; the frozen evalset is unchanged.
 
 ## Consequences
 - **Positive:**

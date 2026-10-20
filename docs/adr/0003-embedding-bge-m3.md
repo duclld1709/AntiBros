@@ -1,7 +1,7 @@
 # ADR-0003: Use bge-m3 for cross-lingual embeddings
 
-- **Status:** Proposed
-- **Date:** TBD
+- **Status:** Rejected
+- **Date:** 2026-10-20
 - **Milestone:** M1 (proposed), M4 (decided)
 
 ## Context
@@ -15,7 +15,7 @@ Users ask in Vietnamese or English; the corpus is English. The embedding model m
 | Commercial embedding API | No local compute; easy | Cost per token; data leaves machine; vendor lock-in |
 
 ## Decision
-Proposed: **bge-m3**. Decide after the embedding ablation, with a separate breakdown for Vietnamese questions.
+**intfloat/multilingual-e5-large** is selected for the full pipeline. On golden dev, its MRR was significantly higher than bge-m3 (+0.195, 95% paired CI [+0.047, +0.370]); Recall@10 and nDCG@10 differences were not significant. The Vietnamese subset is reported separately in `reports/retrieval_ablation.md` and remains small (6 items).
 
 ## Evidence
 Planned runs: `configs/ablations/{retrieval_dense / retrieval_dense_e5}.yaml` with `antibros eval retrieval` on golden dev and retrieval-synth. Results:

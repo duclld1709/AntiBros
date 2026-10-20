@@ -1,0 +1,5 @@
+{
+  "eval_set": "synth",
+  "kind": "retrieval",
+  "split": "dev"
+}

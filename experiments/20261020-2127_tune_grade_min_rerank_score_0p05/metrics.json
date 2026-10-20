@@ -1,0 +1,427 @@
+{
+  "language=en": {
+    "abstention_correct": {
+      "high": 0.875,
+      "low": 0.25,
+      "n": 8,
+      "value": 0.625
+    },
+    "abstention_f1": {
+      "high": 0.923077,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.571429
+    },
+    "answer_relevancy": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_precision": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_recall": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 3,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "doc_recall@3": {
+      "high": 0.861111,
+      "low": 0.527778,
+      "n": 6,
+      "value": 0.694444
+    },
+    "evidence_recall@10": {
+      "high": 0.75,
+      "low": 0.467593,
+      "n": 6,
+      "value": 0.62037
+    },
+    "evidence_recall@5": {
+      "high": 0.652778,
+      "low": 0.375,
+      "n": 6,
+      "value": 0.5
+    },
+    "faithfulness": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "false_abstain": {
+      "high": 0.833333,
+      "low": 0.1625,
+      "n": 6,
+      "value": 0.5
+    },
+    "keypoint_coverage": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "latency_ms": {
+      "high": 27974.615819,
+      "low": 17999.216538,
+      "n": 8,
+      "value": 22901.9465
+    },
+    "latency_p50_ms": {
+      "high": 30866.3816,
+      "low": 16391.8439,
+      "n": 8,
+      "value": 22558.8744
+    },
+    "latency_p95_ms": {
+      "high": 31973.8271,
+      "low": 26576.903645,
+      "n": 8,
+      "value": 31586.221175
+    },
+    "llm_cache_hits": {
+      "high": 4.75,
+      "low": 3.5,
+      "n": 8,
+      "value": 4.125
+    },
+    "llm_calls": {
+      "high": 4.75,
+      "low": 3.5,
+      "n": 8,
+      "value": 4.125
+    },
+    "mrr": {
+      "high": 1.0,
+      "low": 0.666667,
+      "n": 6,
+      "value": 0.888889
+    },
+    "ndcg@10": {
+      "high": 0.807857,
+      "low": 0.417064,
+      "n": 6,
+      "value": 0.637881
+    },
+    "structured_output_validity": {
+      "high": 1.0,
+      "low": 0.80625,
+      "n": 8,
+      "value": 0.91875
+    },
+    "total_tokens": {
+      "high": 5326.625,
+      "low": 1395.609375,
+      "n": 8,
+      "value": 3183.625
+    },
+    "unsupported_claims_removed": {
+      "high": 0.625,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.25
+    }
+  },
+  "language=vi": {
+    "abstention_correct": {
+      "high": 0.75,
+      "low": 0.121875,
+      "n": 8,
+      "value": 0.375
+    },
+    "abstention_f1": {
+      "high": 0.8,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.444444
+    },
+    "answer_relevancy": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_precision": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_recall": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 1,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "doc_recall@3": {
+      "high": 0.944444,
+      "low": 0.627778,
+      "n": 6,
+      "value": 0.794444
+    },
+    "evidence_recall@10": {
+      "high": 0.944444,
+      "low": 0.644405,
+      "n": 6,
+      "value": 0.787302
+    },
+    "evidence_recall@5": {
+      "high": 0.883869,
+      "low": 0.483267,
+      "n": 6,
+      "value": 0.678307
+    },
+    "faithfulness": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "false_abstain": {
+      "high": 1.0,
+      "low": 0.5,
+      "n": 6,
+      "value": 0.833333
+    },
+    "keypoint_coverage": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "latency_ms": {
+      "high": 29436.083605,
+      "low": 19224.950224,
+      "n": 8,
+      "value": 25076.951275
+    },
+    "latency_p50_ms": {
+      "high": 31019.0145,
+      "low": 15508.9385,
+      "n": 8,
+      "value": 30299.65
+    },
+    "latency_p95_ms": {
+      "high": 31925.2274,
+      "low": 30372.4736,
+      "n": 8,
+      "value": 31608.052885
+    },
+    "llm_cache_hits": {
+      "high": 4.875,
+      "low": 3.75,
+      "n": 8,
+      "value": 4.375
+    },
+    "llm_calls": {
+      "high": 4.875,
+      "low": 3.75,
+      "n": 8,
+      "value": 4.375
+    },
+    "mrr": {
+      "high": 1.0,
+      "low": 0.75,
+      "n": 6,
+      "value": 0.916667
+    },
+    "ndcg@10": {
+      "high": 0.926109,
+      "low": 0.60549,
+      "n": 6,
+      "value": 0.778724
+    },
+    "structured_output_validity": {
+      "high": 0.95,
+      "low": 0.7,
+      "n": 8,
+      "value": 0.85
+    },
+    "total_tokens": {
+      "high": 4182.828125,
+      "low": 1331.065625,
+      "n": 8,
+      "value": 2606.5
+    },
+    "unsupported_claims_removed": {
+      "high": 0.875,
+      "low": 0.0,
+      "n": 8,
+      "value": 0.375
+    }
+  },
+  "n_items": 16,
+  "overall": {
+    "abstention_correct": {
+      "high": 0.75,
+      "low": 0.25,
+      "n": 16,
+      "value": 0.5
+    },
+    "abstention_f1": {
+      "high": 0.75,
+      "low": 0.153846,
+      "n": 16,
+      "value": 0.5
+    },
+    "answer_relevancy": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_precision": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_recall": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "citation_validity": {
+      "high": 1.0,
+      "low": 1.0,
+      "n": 4,
+      "value": 1.0
+    },
+    "cost_usd": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "doc_recall@3": {
+      "high": 0.875,
+      "low": 0.622153,
+      "n": 12,
+      "value": 0.744444
+    },
+    "evidence_recall@10": {
+      "high": 0.812966,
+      "low": 0.581933,
+      "n": 12,
+      "value": 0.703836
+    },
+    "evidence_recall@5": {
+      "high": 0.723231,
+      "low": 0.460701,
+      "n": 12,
+      "value": 0.589153
+    },
+    "faithfulness": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "false_abstain": {
+      "high": 0.916667,
+      "low": 0.333333,
+      "n": 12,
+      "value": 0.666667
+    },
+    "keypoint_coverage": {
+      "high": NaN,
+      "low": NaN,
+      "n": 0,
+      "value": NaN
+    },
+    "latency_ms": {
+      "high": 27685.4886,
+      "low": 20081.429417,
+      "n": 16,
+      "value": 23989.448888
+    },
+    "latency_p50_ms": {
+      "high": 30866.3816,
+      "low": 16013.49275,
+      "n": 16,
+      "value": 28700.1659
+    },
+    "latency_p95_ms": {
+      "high": 31973.8271,
+      "low": 30866.3816,
+      "n": 16,
+      "value": 31937.377325
+    },
+    "llm_cache_hits": {
+      "high": 4.6875,
+      "low": 3.8125,
+      "n": 16,
+      "value": 4.25
+    },
+    "llm_calls": {
+      "high": 4.6875,
+      "low": 3.8125,
+      "n": 16,
+      "value": 4.25
+    },
+    "mrr": {
+      "high": 1.0,
+      "low": 0.75,
+      "n": 12,
+      "value": 0.902778
+    },
+    "ndcg@10": {
+      "high": 0.833656,
+      "low": 0.552844,
+      "n": 12,
+      "value": 0.708303
+    },
+    "structured_output_validity": {
+      "high": 0.959375,
+      "low": 0.79375,
+      "n": 16,
+      "value": 0.884375
+    },
+    "total_tokens": {
+      "high": 4270.014062,
+      "low": 1691.2875,
+      "n": 16,
+      "value": 2895.0625
+    },
+    "unsupported_claims_removed": {
+      "high": 0.625,
+      "low": 0.0625,
+      "n": 16,
+      "value": 0.3125
+    }
+  },
+  "status_counts": {
+    "abstained": 12,
+    "answered": 4
+  }
+}
