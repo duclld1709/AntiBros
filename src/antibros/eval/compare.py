@@ -121,13 +121,13 @@ def render_markdown(cmp: Comparison, name_a: str, name_b: str) -> str:
         f"Common items: {cmp.n_common}. Soft fingerprint differences: "
         f"{', '.join(cmp.soft_differences) or 'none'}.",
         "",
-        "| Metric | A | B | B - A | 95% CI | Significant |",
-        "|---|---|---|---|---|---|",
+        "| Metric | n | A | B | B - A | 95% CI | Significant |",
+        "|---|---|---|---|---|---|---|",
     ]
     for m, r in cmp.metrics.items():
         sig = "yes" if r["significant"] else "no (CI contains 0)"
         lines.append(
-            f"| {m} | {r['mean_a']:.3f} | {r['mean_b']:.3f} | {r['diff']:+.3f} | "
+            f"| {m} | {r['n']} | {r['mean_a']:.3f} | {r['mean_b']:.3f} | {r['diff']:+.3f} | "
             f"[{r['low']:+.3f}, {r['high']:+.3f}] | {sig} |"
         )
     return "\n".join(lines) + "\n"

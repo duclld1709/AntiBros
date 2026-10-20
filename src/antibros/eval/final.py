@@ -619,8 +619,9 @@ def _ci(v: Mapping[str, Any]) -> str:
 
 def _table(cmp: Comparison) -> list[str]:
     out = [
-        "| Metric | A (baseline) | B (full) | B - A | 95% CI | Significant |",
-        "|---|---|---|---|---|---|",
+        # n = items where both runs have the metric (judge scores need both runs to answer).
+        "| Metric | n | A (baseline) | B (full) | B - A | 95% CI | Significant |",
+        "|---|---|---|---|---|---|---|",
     ]
     order = [m for m in PRIMARY if m in cmp.metrics] + [m for m in cmp.metrics if m not in PRIMARY]
     for m in order:
@@ -628,7 +629,7 @@ def _table(cmp: Comparison) -> list[str]:
         name = f"**{m}**" if m in PRIMARY else m
         sig = "yes" if r["significant"] else "no (CI contains 0)"
         out.append(
-            f"| {name} | {r['mean_a']:.3f} | {r['mean_b']:.3f} | {r['diff']:+.3f} | "
+            f"| {name} | {r['n']} | {r['mean_a']:.3f} | {r['mean_b']:.3f} | {r['diff']:+.3f} | "
             f"[{r['low']:+.3f}, {r['high']:+.3f}] | {sig} |"
         )
     return out
