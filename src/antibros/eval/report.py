@@ -9,11 +9,12 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from antibros.config import EvalConfig
+from antibros.config import AppConfig, EvalConfig
 from antibros.eval.bootstrap import Indices, bootstrap_mean, bootstrap_stat
 from antibros.eval.metrics.generation import abstention_f1, citation_validity, percentile
 from antibros.eval.relevance import ChunkRef
@@ -173,6 +174,33 @@ def aggregate(rows: Sequence[dict[str, Any]], cfg: EvalConfig) -> dict[str, Any]
     for lang in sorted({r["language"] for r in rows}):
         result[f"language={lang}"] = block([r for r in rows if r["language"] == lang])
     return result
+
+
+def write_report(
+    run_dir: Path, cfg: AppConfig, items: Sequence[GoldenItem]
+) -> tuple[dict[str, Any], bool]:
+    """Write ``per_item.jsonl`` and ``metrics.json`` for an e2e run. Returns the metrics and
+    whether span-based retrieval metrics could be computed (they need the chunk file of the
+    run's chunker, written by ``antibros index``)."""
+    from antibros.eval.judge import load_judgments
+    from antibros.eval.predict import load_predictions
+    from antibros.eval.retrieval_eval import chunk_ref
+    from antibros.evalset.store import doc_texts
+    from antibros.indexing.pipeline import chunks_path, read_chunks
+    from antibros.io import write_json, write_jsonl
+
+    preds = load_predictions(run_dir)
+    chunks_file = chunks_path(cfg.ingestion.processed_dir, cfg.retrieval.chunker)
+    retrieval = None
+    if chunks_file.exists():
+        chunks = [chunk_ref(c.model_dump()) for c in read_chunks(chunks_file)]
+        texts = doc_texts(cfg.ingestion.processed_dir)
+        retrieval = retrieval_metrics(items, preds, chunks, texts, cfg.eval)
+    rows = per_item_rows(items, preds, load_judgments(run_dir), retrieval)
+    write_jsonl(run_dir / "per_item.jsonl", rows)
+    metrics = aggregate(rows, cfg.eval)
+    write_json(run_dir / "metrics.json", metrics)
+    return metrics, retrieval is not None
 
 
 def is_number(v: Any) -> bool:

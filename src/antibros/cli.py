@@ -1,11 +1,11 @@
-"""``antibros`` command-line interface. Later-milestone subcommands are stubs until they land."""
+"""``antibros`` command-line interface."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, NoReturn, cast
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 import typer
 
@@ -35,11 +35,6 @@ class Split(StrEnum):
 class SetName(StrEnum):
     golden = "golden"
     synth = "synth"
-
-
-def _todo(command: str, milestone: str) -> NoReturn:
-    typer.echo(f"`antibros {command}` is not implemented yet (planned for {milestone}).", err=True)
-    raise typer.Exit(code=2)
 
 
 def _dev_only(split: Split) -> None:
@@ -855,14 +850,9 @@ def eval_report(run: RunArg) -> None:
     import yaml
 
     from antibros.config import AppConfig
-    from antibros.eval.judge import load_judgments
-    from antibros.eval.predict import load_predictions
-    from antibros.eval.report import aggregate, per_item_rows, retrieval_metrics
-    from antibros.eval.retrieval_eval import chunk_ref
+    from antibros.eval.report import write_report
     from antibros.evalset.schemas import GoldenItem
-    from antibros.evalset.store import doc_texts
-    from antibros.indexing.pipeline import chunks_path, read_chunks
-    from antibros.io import read_json, write_jsonl
+    from antibros.io import read_json
 
     meta = read_json(run / "run.json")
     cfg = AppConfig.model_validate(
@@ -871,19 +861,9 @@ def eval_report(run: RunArg) -> None:
     items = [
         cast(GoldenItem, it) for it in _frozen_items(cfg, "golden") if it.split == meta["split"]
     ]
-    preds = load_predictions(run)
-    chunks_file = chunks_path(cfg.ingestion.processed_dir, cfg.retrieval.chunker)
-    retrieval = None
-    if chunks_file.exists():
-        chunks = [chunk_ref(c.model_dump()) for c in read_chunks(chunks_file)]
-        texts = doc_texts(cfg.ingestion.processed_dir)
-        retrieval = retrieval_metrics(items, preds, chunks, texts, cfg.eval)
-    else:
-        typer.echo(f"{chunks_file} not found: skipping Evidence Recall@k (run `antibros index`)")
-    rows = per_item_rows(items, preds, load_judgments(run), retrieval)
-    write_jsonl(run / "per_item.jsonl", rows)
-    metrics = aggregate(rows, cfg.eval)
-    write_json(run / "metrics.json", metrics)
+    metrics, with_retrieval = write_report(run, cfg, items)
+    if not with_retrieval:
+        typer.echo("Chunk file not found: skipped Evidence Recall@k (run `antibros index`)")
     typer.echo(f"{run}: {metrics['n_items']} items, status {metrics['status_counts']}")
 
 
@@ -892,9 +872,66 @@ def eval_final(
     plan: Annotated[Path, typer.Option(help="Pre-registered plan.")] = Path(
         "configs/final_eval_plan.yaml"
     ),
+    rehearsal: Annotated[
+        bool, typer.Option(help="Dry run on dev with --limit questions; no test_runs.log entry.")
+    ] = False,
+    limit: Annotated[int, typer.Option(help="Questions per run in a rehearsal.")] = 3,
+    rerun: Annotated[
+        list[str] | None,
+        typer.Option(help="Re-run this failed test run once (infrastructure faults only)."),
+    ] = None,
+    reason: Annotated[str, typer.Option(help="Why the re-run is needed (deviations.md).")] = "",
 ) -> None:
-    """The only way to run the test split (M5, pre-registered plan)."""
-    _todo("eval final", "M5")
+    """The only way to run the test split (M5): checks the locked plan, then runs it once."""
+    from antibros.eval.final import FinalError, InfraFailure, default_deps, read_git_state, run_plan
+
+    configure_logging("INFO")
+    try:
+        result = run_plan(
+            plan,
+            runs_dir=Path("experiments"),
+            deps=default_deps(typer.echo),
+            git=read_git_state(plan),
+            rehearsal=rehearsal,
+            limit=limit,
+            rerun={name: reason for name in rerun or []},
+        )
+    except FinalError as e:
+        typer.echo(f"Refusing to run: {e}", err=True)
+        raise typer.Exit(code=1) from e
+    except InfraFailure as e:
+        typer.echo(
+            f"{e}\nLogged as failed in experiments/test_runs.log. Fix the infrastructure, then "
+            "re-run that run once with --rerun <name> --reason '...' (recorded in "
+            "experiments/deviations.md). Never re-run because of results.",
+            err=True,
+        )
+        raise typer.Exit(code=1) from e
+    for name, run_dir in result.run_dirs.items():
+        typer.echo(f"{name}: {run_dir.as_posix()}")
+    if result.comparison is not None:
+        typer.echo(f"Comparison: {result.comparison.as_posix()}")
+
+
+@eval_app.command("errors")
+def eval_errors(
+    run: Annotated[list[Path], typer.Option("--run", help="Run directory (repeatable).")],
+    config: Annotated[Path, typer.Option(help="Error-analysis settings.")] = Path(
+        "configs/error_analysis.yaml"
+    ),
+    out: Annotated[Path | None, typer.Option(help="Also write the draft to this file.")] = None,
+) -> None:
+    """Draft labels for every wrong item of e2e/safety runs (input to error_analysis.md)."""
+    from antibros.eval.errors import load_error_config, render_errors, run_errors
+    from antibros.io import read_jsonl, write_text
+
+    cfg = load_error_config(config)
+    md = render_errors(
+        [(r, run_errors(r, cfg), len(read_jsonl(r / "per_item.jsonl"))) for r in run]
+    )
+    if out is not None:
+        write_text(out, md)
+    typer.echo(md)
 
 
 @app.command()

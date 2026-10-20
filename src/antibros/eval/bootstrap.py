@@ -79,6 +79,21 @@ def bootstrap_mean(
     return bootstrap_stat(len(arr), lambda idx: float(arr[idx].mean()), n_resamples, seed, level)
 
 
+def paired_bootstrap_stat(
+    n: int,
+    stat_a: Callable[[Indices], float],
+    stat_b: Callable[[Indices], float],
+    n_resamples: int = 1000,
+    seed: int = 42,
+    level: float = 0.95,
+) -> PairedResult:
+    """CI of ``stat_b - stat_a`` for a statistic that is not a mean of per-item values (e.g.
+    abstention F1), resampling the same item indices for both runs."""
+    ci = bootstrap_stat(n, lambda idx: stat_b(idx) - stat_a(idx), n_resamples, seed, level)
+    significant = bool(ci.n) and not (ci.low <= 0.0 <= ci.high)
+    return PairedResult(ci.value, ci.low, ci.high, ci.n, significant)
+
+
 def paired_bootstrap(
     a: Sequence[float],
     b: Sequence[float],

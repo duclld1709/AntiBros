@@ -19,12 +19,15 @@ from antibros.eval.schemas import Judgment, Prediction
 from antibros.evalset.schemas import GoldenItem
 from antibros.evalset.text import content_words
 from antibros.io import append_jsonl, read_jsonl, repair_jsonl_tail
-from antibros.llm import LLMClient, LLMParams
+from antibros.llm import LLMClient, LLMParams, StructuredOutputError
 from antibros.logging import get_logger
 from antibros.prompts import PromptTemplate, load_prompt
 
 log = get_logger(__name__)
 JUDGMENTS = "judgments.jsonl"
+# Prefixes of ``Judgment.error``: ``eval final`` treats infrastructure errors as a failed run.
+INVALID_OUTPUT = "invalid_output"
+INFRA_ERROR = "infra"
 
 
 class Judge(Protocol):
@@ -162,9 +165,13 @@ def run_judge(
         t0 = time.perf_counter()
         try:
             j = judge.judge(by_id[pred.id], pred)
-        except Exception as e:
+        except StructuredOutputError as e:  # model outcome: the judge ignored the schema
+            log.warning("judge_invalid_output", item=pred.id, error=str(e)[:200])
+            j = Judgment(id=pred.id, error=f"{INVALID_OUTPUT}: {e}")
+            errors += 1
+        except Exception as e:  # infrastructure: runtime down, timeout, OOM
             log.warning("judge_error", item=pred.id, error=str(e)[:200])
-            j = Judgment(id=pred.id, error=str(e))
+            j = Judgment(id=pred.id, error=f"{INFRA_ERROR}: {e}")
             errors += 1
         if not j.latency_ms:
             j = j.model_copy(update={"latency_ms": (time.perf_counter() - t0) * 1000})

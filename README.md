@@ -4,9 +4,10 @@ Evidence-based Q&A for muscle-building nutrition (protein and creatine): cited R
 search, reranking, citation verification, abstention and medical guardrails, evaluated on an RTX
 3050 6GB laptop.
 
-> Status: M4 dev runs complete and the final evaluation plan is locked. Retrieval and guard
-> ablations ran on the RTX 3050; threshold tuning and E2E leave-one-out ran on a Linux V100.
-> The `m4` tag is not created. Run artifacts are stored under `experiments/`.
+> Status: M5 tooling ready (`antibros eval final`, `antibros eval errors`); the one-time test
+> run of the locked plan is pending. M4 dev runs are complete: retrieval and guard ablations
+> ran on the RTX 3050, threshold tuning and E2E leave-one-out on a Linux V100. Test results:
+> TBD. Run artifacts are stored under `experiments/`.
 
 ## Quickstart (Windows, PowerShell)
 

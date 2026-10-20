@@ -13,7 +13,7 @@ AntiBros là trợ lý hỏi đáp dinh dưỡng tăng cơ (**protein & creatine
 👉 **Trước mỗi task, đọc `PROJECT_SPEC.md` và `docs/milestones/<milestone hiện tại>.md`.** Trước khi chạy đánh giá cuối, đọc thêm `docs/runbooks/final_eval.md`.
 
 ## Milestone hiện tại
-**M4 — Pipeline nâng cao, guardrails & ablation** (code xong; chờ các run dev trên laptop, xem `docs/runbooks/m4_dev_runs.md`)
+**M5 — Đánh giá cuối & phân tích lỗi** (công cụ đã xong; chờ diễn tập và chạy chính thức trên máy có GPU, xem `docs/runbooks/final_eval.md`)
 
 ---
 
@@ -54,7 +54,10 @@ antibros eval tune --config configs/full.yaml --models configs/models/laptop.yam
 antibros summarize experiments/<a> experiments/<b> [--out reports/<x>.md]
 antibros compare experiments/<a> experiments/<b>
 antibros plan lock --guard-run experiments/<g1> --guard-run experiments/<g2> --guard-run experiments/<g3>   # cuối M4
+antibros eval final --rehearsal --limit 3                 # diễn tập trên dev, không ghi test_runs.log
 antibros eval final --plan configs/final_eval_plan.yaml   # chỉ ở M5, hỏi chủ dự án trước
+antibros eval final --rerun <run> --reason "<sự cố hạ tầng>" # chạy lại một lần run bị failed
+antibros eval errors --run experiments/<run> [--run …] --out reports/_errors_test.md
 antibros serve                                 # API + UI đã build (frontend/dist) tại :8000
 uv run poe ui | uv run poe ui-build | uv run poe ui-check   # Vite dev server :5173 | build | lint+typecheck+test
 uv run python scripts/env_report.py            # GPU, driver, torch, Ollama, digest model

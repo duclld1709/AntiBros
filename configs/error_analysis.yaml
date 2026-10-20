@@ -1,0 +1,5 @@
+# M5 error analysis (`antibros eval errors`). Separate from the pipeline configs, which are
+# pinned by configs/final_eval_plan.yaml. Declared before the test runs.
+judge_threshold: 0.5   # an answered item is wrong if faithfulness, citation precision or
+                       # key-point coverage is below this
+question_chars: 140    # question text shown per row in the draft table

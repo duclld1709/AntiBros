@@ -44,7 +44,3 @@ def test_predict_rejects_bad_tag() -> None:
         app, ["eval", "predict", "--config", "c.yaml", "--models", "m.yaml", "--tag", "a:b"]
     )
     assert res.exit_code == 1
-
-
-def test_stub_exit_code() -> None:
-    assert runner.invoke(app, ["eval", "final"]).exit_code == 2
