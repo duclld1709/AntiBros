@@ -26,8 +26,9 @@ from 12 open-access papers.
 > changing supplements, especially with a health condition, medication, pregnancy, or if you
 > are under 18.
 
-**Demo video (≈2 min):** TBD. To be recorded on the laptop (Vietnamese cited answer, a
-myth, an abstention, a red-flag redirect, the trace and the benchmark).
+**Demo (GIF):**
+
+![AntiBros demo](docs/assets/demo.gif)
 
 ## Architecture
 

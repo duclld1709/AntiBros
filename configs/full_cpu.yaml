@@ -1,0 +1,7 @@
+﻿extends: full.yaml
+name: full_cpu_reranker
+rerank:
+  device: cpu
+embedders:
+  e5_large:
+    device: cpu
